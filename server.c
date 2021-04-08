@@ -24,11 +24,6 @@ void *sock_thread(void *arg) {
     time_t result = time(NULL);
     struct tm *time_info = gmtime(&result);
 
-    strcpy(content, "What's up?\nYour IP address is ");
-    strcat(content, inet_ntoa(sin_addr_t));
-    strcat(content, "\n");
-    content_len = strlen(content);
-
     strcpy(server_message, "HTTP/1.1 200 OK\n");
     strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
     strcat(server_message, date);
@@ -38,6 +33,20 @@ void *sock_thread(void *arg) {
     sprintf(content_length, "Content-Length: %d\n", content_len);
     strcat(server_message, content_length);
     strcat(server_message, "Content-Type: text/html\n\n");
+
+    // copying to server message from HTML file
+    //
+    // char line[256];
+    // FILE *fp = fopen("index.html", "r");
+    // while (fgets(line, 256, fp) != NULL) {
+    //     strcat(server_message, line);
+    //     memset(line, 0, 256);
+    // }
+
+    strcpy(content, "What's up?\nYour IP address is ");
+    strcat(content, inet_ntoa(sin_addr_t));
+    strcat(content, "\n");
+    content_len = strlen(content);
     strcat(server_message, content);
 
     if (send(client_socket_t, server_message, 
