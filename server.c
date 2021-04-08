@@ -15,8 +15,6 @@ typedef struct {
     struct in_addr  sin_addr_t;
 } sock_info;
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 void *sock_thread(void *arg) {
     char server_message[512], content[64], content_length[32], date[64];
     int content_len;
@@ -25,11 +23,6 @@ void *sock_thread(void *arg) {
     struct in_addr sin_addr_t = socket_info.sin_addr_t;
     time_t result = time(NULL);
     struct tm *time_info = gmtime(&result);
-
-    if (pthread_mutex_lock(&lock) != 0) {
-        fprintf(stderr, "pthread_mutex_lock: %s\n", strerror(errno));
-        exit(0);
-    }
 
     strcpy(content, "What's up?\nYour IP address is ");
     strcat(content, inet_ntoa(sin_addr_t));
@@ -46,12 +39,6 @@ void *sock_thread(void *arg) {
     strcat(server_message, content_length);
     strcat(server_message, "Content-Type: text/html\n\n");
     strcat(server_message, content);
-
-    if (pthread_mutex_unlock(&lock) != 0) {
-        fprintf(stderr, "pthread_mutex_unlock: %s\n", strerror(errno));
-        exit(0);
-    }
-    sleep(1);
 
     if (send(client_socket_t, server_message, 
             strlen(server_message), 0) < 0) {
