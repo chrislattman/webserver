@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
+#include <time.h>
 
 typedef struct {
     int             client_socket_t;
@@ -17,18 +18,35 @@ typedef struct {
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void *sock_thread(void *arg) {
-    char server_message[64];
+    char server_message[512], content[64], content_length[32], date[64];
+    int content_len;
     sock_info socket_info = *((sock_info *) arg);
     int client_socket_t = socket_info.client_socket_t;
     struct in_addr sin_addr_t = socket_info.sin_addr_t;
+    time_t result = time(NULL);
+    struct tm *time_info = gmtime(&result);
 
     if (pthread_mutex_lock(&lock) != 0) {
         fprintf(stderr, "pthread_mutex_lock: %s\n", strerror(errno));
         exit(0);
     }
-    strcpy(server_message, "What's up?\nYour IP address is ");
-    strcat(server_message, inet_ntoa(sin_addr_t));
-    strcat(server_message, "\n");
+
+    strcpy(content, "What's up?\nYour IP address is ");
+    strcat(content, inet_ntoa(sin_addr_t));
+    strcat(content, "\n");
+    content_len = strlen(content);
+
+    strcpy(server_message, "HTTP/1.1 200 OK\n");
+    strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
+    strcat(server_message, date);
+    strcat(server_message, "Server: Web Server\n");
+    strcat(server_message, "Last-Modified: Wed, 07 Apr 2021 02:50:30 GMT\n");
+    strcat(server_message, "Accept-Ranges: bytes\n");
+    sprintf(content_length, "Content-Length: %d\n", content_len);
+    strcat(server_message, content_length);
+    strcat(server_message, "Content-Type: text/html\n\n");
+    strcat(server_message, content);
+
     if (pthread_mutex_unlock(&lock) != 0) {
         fprintf(stderr, "pthread_mutex_unlock: %s\n", strerror(errno));
         exit(0);
@@ -36,7 +54,7 @@ void *sock_thread(void *arg) {
     sleep(1);
 
     if (send(client_socket_t, server_message, 
-            sizeof(server_message), 0) < 0) {
+            strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
         exit(0);
     }
@@ -61,7 +79,7 @@ int main() {
     }
 
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(9001);
+    server_address.sin_port = htons(80);
     server_address.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(server_socket, (struct sockaddr *) &server_address, 
