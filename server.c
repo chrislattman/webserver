@@ -16,8 +16,8 @@ typedef struct {
 } sock_info;
 
 void *sock_thread(void *arg) {
-    char server_message[512], content[64], content_length[32], date[64];
-    int content_len;
+    char server_message[4096], content[64], content_length[32], date[64];
+    int content_len = 0;
     sock_info socket_info = *((sock_info *) arg);
     int client_socket_t = socket_info.client_socket_t;
     struct in_addr sin_addr_t = socket_info.sin_addr_t;
@@ -30,24 +30,27 @@ void *sock_thread(void *arg) {
     strcat(server_message, "Server: Web Server\n");
     strcat(server_message, "Last-Modified: Wed, 07 Apr 2021 02:50:30 GMT\n");
     strcat(server_message, "Accept-Ranges: bytes\n");
-    sprintf(content_length, "Content-Length: %d\n", content_len);
-    strcat(server_message, content_length);
-    strcat(server_message, "Content-Type: text/html\n\n");
-
-    // copying to server message from HTML file
-    //
-    // char line[256];
-    // FILE *fp = fopen("index.html", "r");
-    // while (fgets(line, 256, fp) != NULL) {
-    //     strcat(server_message, line);
-    //     memset(line, 0, 256);
-    // }
 
     strcpy(content, "What's up?\nYour IP address is ");
     strcat(content, inet_ntoa(sin_addr_t));
     strcat(content, "\n");
     content_len = strlen(content);
+
+    // copying to server message from HTML file
+    //
+    // char html[4096], line[256];
+    // FILE *fp = fopen("index.html", "r");
+    // while (fgets(line, 256, fp) != NULL) {
+    //     content_len += strlen(line);
+    //     strcat(html, line);
+    //     memset(line, 0, 256);
+    // }
+
+    sprintf(content_length, "Content-Length: %d\n", content_len);
+    strcat(server_message, content_length);
+    strcat(server_message, "Content-Type: text/html\n\n");
     strcat(server_message, content);
+    // strcat(server_message, html);
 
     if (send(client_socket_t, server_message, 
             strlen(server_message), 0) < 0) {
