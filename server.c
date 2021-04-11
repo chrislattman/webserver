@@ -17,10 +17,10 @@ typedef struct {
 
 void *sock_thread(void *arg) {
     char server_message[4096], content[64], content_length[32], date[64];
-    int content_len = 0;
     sock_info socket_info = *((sock_info *) arg);
     int client_socket_t = socket_info.client_socket_t;
     struct in_addr sin_addr_t = socket_info.sin_addr_t;
+
     time_t result = time(NULL);
     struct tm *time_info = gmtime(&result);
 
@@ -34,7 +34,6 @@ void *sock_thread(void *arg) {
     strcpy(content, "What's up?\nYour IP address is ");
     strcat(content, inet_ntoa(sin_addr_t));
     strcat(content, "\n");
-    content_len = strlen(content);
 
     // copying to server message from HTML file
     //
@@ -46,7 +45,7 @@ void *sock_thread(void *arg) {
     //     memset(line, 0, 256);
     // }
 
-    sprintf(content_length, "Content-Length: %d\n", content_len);
+    sprintf(content_length, "Content-Length: %lu\n", strlen(content));
     strcat(server_message, content_length);
     strcat(server_message, "Content-Type: text/html\n\n");
     strcat(server_message, content);
