@@ -28,7 +28,6 @@ public class WebServer {
         finally {
             stop();
         }
-
     }
 
     public void stop() {
@@ -54,7 +53,8 @@ public class WebServer {
             try {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                currentTime = new SimpleDateFormat("'Date: ' EEE, d MMM yyyy HH:mm:ss z");
+                currentTime = new SimpleDateFormat(
+                        "'Date: 'EEE, d MMM yyyy HH:mm:ss z");
                 currentTime.setTimeZone(TimeZone.getTimeZone("GMT"));
 
                 content = new StringBuilder();
