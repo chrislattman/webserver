@@ -7,11 +7,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class WebServer {
+public class Server {
     private ServerSocket serverSocket;
 
     public static void main(String[] args) {
-        WebServer server = new WebServer();
+        Server server = new Server();
         server.start();
     }
 
