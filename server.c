@@ -56,6 +56,10 @@ void *sock_thread(void *arg) {
         fprintf(stderr, "send: %s\n", strerror(errno));
         exit(0);
     }
+    if (shutdown(client_socket_t, SHUT_WR) < 0) {
+        fprintf(stderr, "shutdown: %s\n", strerror(errno));
+        exit(0);
+    }
     if (close(client_socket_t) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
         exit(0);

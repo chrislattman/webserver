@@ -1,5 +1,3 @@
-package multithreading;
-
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -74,7 +72,7 @@ public class Server {
                 out.println();
                 out.println(content.toString());
 
-                out.close();
+                out.close(); // same effect as clientSocket.shutdownOutput()
                 clientSocket.close();
 
             }

@@ -25,6 +25,7 @@ class ClientHandler(Thread):
         server_message += content
 
         self.client_socket.send(server_message.encode())
+        self.client_socket.shutdown(socket.SHUT_WR)
         self.client_socket.close()
 
 
