@@ -99,7 +99,7 @@ int main() {
         exit(0);
     }
 
-    if (bind(server_socket, result->ai_addr, result->ai_addrlen)) {
+    if (bind(server_socket, result->ai_addr, result->ai_addrlen) < 0) {
         freeaddrinfo(result);
         if (close(server_socket) < 0) {
             fprintf(stderr, "close: %s\n", strerror(errno));
