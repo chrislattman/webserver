@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
+
+#define DEFAULT_PORT "80"
 
 typedef struct {
     int             client_socket_t;
@@ -69,28 +73,55 @@ void *sock_thread(void *arg) {
 }
 
 int main() {
-    int server_socket, client_socket, thread_index;
+    int server_socket, client_socket, thread_index, code;
     struct sockaddr_in server_address, client_address;
+    struct addrinfo *result, hints;
     socklen_t client_address_size = sizeof(client_address);
     pthread_t thread_id[60];
     sock_info *socket_info;
 
-    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    /* Approach 1 */
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    if ((code = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result)) < 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(code));
+        exit(0);
+    }
+
+    if ((server_socket = socket(result->ai_family, result->ai_socktype, 
+            result->ai_protocol)) < 0) {
         fprintf(stderr, "socket: %s\n", strerror(errno));
         exit(0);
     }
 
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(80);
-    server_address.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(server_socket, (struct sockaddr *) &server_address, 
-            sizeof(server_address)) < 0) {
+    if (bind(server_socket, result->ai_addr, result->ai_addrlen)) {
         fprintf(stderr, "bind: %s\n", strerror(errno));
         exit(0);
     }
 
-    if (listen(server_socket, 50) < 0) {
+    freeaddrinfo(result);
+
+    /* Approach 2 */
+    // if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    //     fprintf(stderr, "socket: %s\n", strerror(errno));
+    //     exit(0);
+    // }
+
+    // server_address.sin_family = AF_INET;
+    // server_address.sin_port = htons(80);
+    // server_address.sin_addr.s_addr = INADDR_ANY;
+
+    // if (bind(server_socket, (struct sockaddr *) &server_address, 
+    //         sizeof(server_address)) < 0) {
+    //     fprintf(stderr, "bind: %s\n", strerror(errno));
+    //     exit(0);
+    // }
+
+    if (listen(server_socket, INT_MAX) < 0) {
         fprintf(stderr, "listen: %s\n", strerror(errno));
         exit(0);
     }

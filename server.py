@@ -3,6 +3,9 @@ import time
 from threading import Thread
 
 
+DEFAULT_PORT = 80
+INT_MAX = 2147483647
+
 class ClientHandler(Thread):
     def __init__(self, client_socket, client_address):
         Thread.__init__(self)
@@ -30,11 +33,22 @@ class ClientHandler(Thread):
 
 
 threads = []
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server_address = ('', 80)
+# Approach 1
+result = socket.getaddrinfo(None, DEFAULT_PORT, socket.AF_INET, 
+    socket.SOCK_STREAM, socket.IPPROTO_TCP, socket.AI_PASSIVE)
+family = result[0][0]
+socktype = result[0][1]
+protocol = result[0][2]
+server_address = result[0][4]
+server_socket = socket.socket(family, socktype, protocol)
+
+# Approach 2
+# server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+# server_address = ('', 80)
+
 server_socket.bind(server_address)
-server_socket.listen(50)
+server_socket.listen(INT_MAX)
 
 while True:
     client_socket, (client_address, port) = server_socket.accept()
