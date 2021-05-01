@@ -94,11 +94,17 @@ int main() {
 
     if ((server_socket = socket(result->ai_family, result->ai_socktype, 
             result->ai_protocol)) < 0) {
+        freeaddrinfo(result);
         fprintf(stderr, "socket: %s\n", strerror(errno));
         exit(0);
     }
 
     if (bind(server_socket, result->ai_addr, result->ai_addrlen)) {
+        freeaddrinfo(result);
+        if (close(server_socket) < 0) {
+            fprintf(stderr, "close: %s\n", strerror(errno));
+            exit(0);
+        }
         fprintf(stderr, "bind: %s\n", strerror(errno));
         exit(0);
     }
@@ -122,6 +128,10 @@ int main() {
     // }
 
     if (listen(server_socket, INT_MAX) < 0) {
+        if (close(server_socket) < 0) {
+            fprintf(stderr, "close: %s\n", strerror(errno));
+            exit(0);
+        }
         fprintf(stderr, "listen: %s\n", strerror(errno));
         exit(0);
     }
@@ -131,6 +141,10 @@ int main() {
         if ((client_socket = accept(server_socket, 
                 (struct sockaddr *) &client_address, 
                 &client_address_size)) < 0) {
+            if (close(server_socket) < 0) {
+                fprintf(stderr, "close: %s\n", strerror(errno));
+                exit(0);
+            }
             fprintf(stderr, "accept: %s\n", strerror(errno));
             exit(0);
         }
