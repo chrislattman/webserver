@@ -123,6 +123,10 @@ int main() {
 
     // if (bind(server_socket, (struct sockaddr *) &server_address, 
     //         sizeof(server_address)) < 0) {
+    //     if (close(server_socket) < 0) {
+    //         fprintf(stderr, "close: %s\n", strerror(errno));
+    //         exit(0);
+    //     }
     //     fprintf(stderr, "bind: %s\n", strerror(errno));
     //     exit(0);
     // }
