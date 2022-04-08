@@ -60,11 +60,10 @@ public class Server {
                 out.println("HTTP/1.1 200 OK");
                 out.println(currentTime.format(new Date()));
                 out.println("Server: Web Server");
-                out.println("Last-Modified: Sat, 10 Apr 2021 00:10:30 GMT");
+                out.println("Last-Modified: Fri, 08 Apr 2022 12:35:05 GMT");
                 out.println("Accept-Ranges: bytes");
 
-                content.append("What's up?\n");
-                content.append("Your current IP address is ");
+                content.append("What's up? Your IP address is ");
                 content.append(clientSocket.getInetAddress().getHostAddress());
 
                 out.println("Content-Length: " + content.length());

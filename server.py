@@ -17,10 +17,10 @@ class ClientHandler(Thread):
         server_message += time.strftime('Date: %a, %d %b %Y %X GMT\n', 
             time.gmtime())
         server_message += 'Server: Web Server\n'
-        server_message += 'Last-Modified: Sun, 25 Apr 2021 17:03:30 GMT\n'
+        server_message += 'Last-Modified: Fri, 08 Apr 2022 12:35:05 GMT\n'
         server_message += 'Accept-Ranges: bytes\n'
 
-        content = 'What\'s up?\nYour IP address is {}\n'.format(
+        content = 'What\'s up? Your IP address is {}\n'.format(
             self.client_address)
 
         server_message += 'Content-Length: {}\n'.format(len(content))
@@ -34,18 +34,8 @@ class ClientHandler(Thread):
 
 threads = []
 
-# Approach 1
-result = socket.getaddrinfo(None, DEFAULT_PORT, socket.AF_INET, 
-    socket.SOCK_STREAM, socket.IPPROTO_TCP, socket.AI_PASSIVE)
-family = result[0][0]
-socktype = result[0][1]
-protocol = result[0][2]
-server_address = result[0][4]
-server_socket = socket.socket(family, socktype, protocol)
-
-# Approach 2
-# server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-# server_address = ('', 80)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+server_address = ('', 80)
 
 server_socket.bind(server_address)
 server_socket.listen(INT_MAX)
