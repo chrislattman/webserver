@@ -106,7 +106,9 @@ int main(void)
             exit(0);
         }
 
-        if ((socket_info = malloc(sizeof(sock_info))) == NULL) {
+        // the typecast is unnecessary for C, but allows this code to be
+        // compiled as C++
+        if ((socket_info = (sock_info *) malloc(sizeof(sock_info))) == NULL) {
             fprintf(stderr, "malloc: %s\n", strerror(errno));
             exit(0);
         }
