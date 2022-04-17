@@ -2,7 +2,6 @@ import socket
 import time
 from threading import Thread
 
-DEFAULT_PORT = 80
 INT_MAX = 2147483647
 
 

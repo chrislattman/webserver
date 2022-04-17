@@ -76,7 +76,7 @@ int main(void)
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(80);
     server_address.sin_addr.s_addr = INADDR_ANY;
-    if (bind(server_socket, (struct sockaddr *) &server_address, 
+    if (bind(server_socket, (struct sockaddr *) &server_address,
             (socklen_t) sizeof(server_address)) < 0) {
         fprintf(stderr, "bind: %s\n", strerror(errno));
         if (close(server_socket) < 0) {
@@ -96,8 +96,8 @@ int main(void)
     thread_index = 0;
     while (1) {
         memset(&client_address, 0, sizeof(client_address));
-        if ((client_socket = accept(server_socket, 
-                (struct sockaddr *) &client_address, 
+        if ((client_socket = accept(server_socket,
+                (struct sockaddr *) &client_address,
                 &client_address_size)) < 0) {
             fprintf(stderr, "accept: %s\n", strerror(errno));
             if (close(server_socket) < 0) {
@@ -114,7 +114,7 @@ int main(void)
         }
         socket_info->client_socket_t = client_socket;
         socket_info->sin_addr_t = client_address.sin_addr;
-        if (pthread_create(&thread_id[thread_index++], NULL, sock_thread, 
+        if (pthread_create(&thread_id[thread_index++], NULL, sock_thread,
                 socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
             exit(0);
