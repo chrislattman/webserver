@@ -7,6 +7,8 @@ import java.util.TimeZone;
 
 public class Server {
     private ServerSocket serverSocket;
+    private ClientHandler[] threads;
+    private int threadIndex;
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -16,8 +18,19 @@ public class Server {
     public void start() {
         try {
             serverSocket = new ServerSocket(80);
+            threads = new ClientHandler[60];
+            threadIndex = 0;
             while (true) {
-                new ClientHandler(serverSocket.accept()).start();
+                threadIndex++;
+                threads[threadIndex] = new ClientHandler(serverSocket.accept());
+                threads[threadIndex].start();
+                if (threadIndex >= 50) {
+                    threadIndex = 0;
+                    while (threadIndex < 50) {
+                        threads[threadIndex++].join();
+                    }
+                    threadIndex = 0;
+                }
             }
         }
         catch (Exception e) {
@@ -65,11 +78,12 @@ public class Server {
 
                 content.append("What's up? Your IP address is ");
                 content.append(clientSocket.getInetAddress().getHostAddress());
+                content.append("\n");
 
                 out.println("Content-Length: " + content.length());
                 out.println("Content-Type: text/html");
                 out.println();
-                out.println(content.toString());
+                out.print(content.toString());
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
                 clientSocket.close();
