@@ -6,16 +6,15 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class Server {
-    private ServerSocket serverSocket;
-    private ClientHandler[] threads;
-    private int threadIndex;
+    private static ServerSocket serverSocket;
+    private static ClientHandler[] threads;
+    private static int threadIndex;
 
     public static void main(String[] args) {
-        Server server = new Server();
-        server.start();
+        start();
     }
 
-    public void start() {
+    public static void start() {
         try {
             serverSocket = new ServerSocket(80);
             threads = new ClientHandler[60];
@@ -41,7 +40,7 @@ public class Server {
         }
     }
 
-    public void stop() {
+    public static void stop() {
         try {
             serverSocket.close();
         }
