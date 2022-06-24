@@ -9,7 +9,9 @@ import (
 
 func handleConnection(conn net.Conn) {
 	full_address := conn.RemoteAddr().String()
-	address_split := strings.Split(full_address, ":")
+	full_address = strings.ReplaceAll(full_address, "[", "")
+	full_address = strings.ReplaceAll(full_address, "]", "")
+	lastIndex := strings.LastIndex(full_address, ":")
 
 	server_message := "HTTP/1.1 200 OK\n"
 	date := time.Now().UTC().Format(time.RFC1123)
@@ -19,7 +21,7 @@ func handleConnection(conn net.Conn) {
 	server_message += "Last-Modified: Sun, 17 Apr 2022 01:58:09 GMT\n"
 	server_message += "Accept-Ranges: bytes\n"
 
-	content := "What's up? Your IP address is " + address_split[0] + "\n"
+	content := "What's up? Your IP address is " + full_address[:lastIndex] + "\n"
 
 	server_message += "Content-Length: " + fmt.Sprintln(len(content))
 	server_message += "Content-Type: text/html\n\n"
@@ -28,10 +30,12 @@ func handleConnection(conn net.Conn) {
 	_, err := conn.Write([]byte(server_message))
 	if err != nil {
 		fmt.Println("net.Conn.Write:", err)
+		return
 	}
 	err = conn.Close()
 	if err != nil {
 		fmt.Println("net.Conn.Close:", err)
+		return
 	}
 }
 

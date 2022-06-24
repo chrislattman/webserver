@@ -10,45 +10,6 @@ public class Server {
     private static ClientHandler[] threads;
     private static int threadIndex;
 
-    public static void main(String[] args) {
-        start();
-    }
-
-    public static void start() {
-        try {
-            serverSocket = new ServerSocket(80);
-            threads = new ClientHandler[60];
-            threadIndex = 0;
-            while (true) {
-                threadIndex++;
-                threads[threadIndex] = new ClientHandler(serverSocket.accept());
-                threads[threadIndex].start();
-                if (threadIndex >= 50) {
-                    threadIndex = 0;
-                    while (threadIndex < 50) {
-                        threads[threadIndex++].join();
-                    }
-                    threadIndex = 0;
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally {
-            stop();
-        }
-    }
-
-    public static void stop() {
-        try {
-            serverSocket.close();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private static class ClientHandler extends Thread {
         private Socket clientSocket;
         private PrintWriter out;
@@ -86,7 +47,37 @@ public class Server {
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
                 clientSocket.close();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
+    public static void main(String[] args) {
+        try {
+            serverSocket = new ServerSocket(80);
+            threads = new ClientHandler[60];
+            threadIndex = 0;
+            while (true) {
+                threadIndex++;
+                threads[threadIndex] = new ClientHandler(serverSocket.accept());
+                threads[threadIndex].start();
+                if (threadIndex >= 50) {
+                    threadIndex = 0;
+                    while (threadIndex < 50) {
+                        threads[threadIndex++].join();
+                    }
+                    threadIndex = 0;
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                serverSocket.close();
             }
             catch (Exception e) {
                 e.printStackTrace();

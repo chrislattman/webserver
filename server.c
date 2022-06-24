@@ -17,7 +17,7 @@ typedef struct sock_info {
     struct in_addr  sin_addr_t;
 } sock_info;
 
-void *sock_thread(void *arg)
+static void *sock_thread(void *arg)
 {
     char server_message[4096], content[64], content_length[32], date[64];
     sock_info *socket_info = (sock_info *) arg;
@@ -35,7 +35,7 @@ void *sock_thread(void *arg)
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
-    strcat(content, inet_ntoa(sin_addr_t));
+    strncat(content, inet_ntoa(sin_addr_t), 15);
     strcat(content, "\n");
 
     sprintf(content_length, "Content-Length: %zu\n", strlen(content));
@@ -45,19 +45,20 @@ void *sock_thread(void *arg)
 
     if (send(client_socket_t, server_message, strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
-        exit(0);
+        goto cleanup;
     }
     if (shutdown(client_socket_t, SHUT_WR) < 0) {
         fprintf(stderr, "shutdown: %s\n", strerror(errno));
-        exit(0);
+        goto cleanup;
     }
     if (close(client_socket_t) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
-        exit(0);
+        goto cleanup;
     }
 
+cleanup:
     free(socket_info);
-    pthread_exit(NULL);
+    return NULL;
 }
 
 int main(void)
@@ -79,18 +80,12 @@ int main(void)
     if (bind(server_socket, (struct sockaddr *) &server_address,
             (socklen_t) sizeof(server_address)) < 0) {
         fprintf(stderr, "bind: %s\n", strerror(errno));
-        if (close(server_socket) < 0) {
-            fprintf(stderr, "close: %s\n", strerror(errno));
-        }
-        exit(0);
+        goto cleanup;
     }
 
     if (listen(server_socket, INT_MAX) < 0) {
         fprintf(stderr, "listen: %s\n", strerror(errno));
-        if (close(server_socket) < 0) {
-            fprintf(stderr, "close: %s\n", strerror(errno));
-        }
-        exit(0);
+        goto cleanup;
     }
 
     thread_index = 0;
@@ -100,24 +95,21 @@ int main(void)
                 (struct sockaddr *) &client_address,
                 &client_address_size)) < 0) {
             fprintf(stderr, "accept: %s\n", strerror(errno));
-            if (close(server_socket) < 0) {
-                fprintf(stderr, "close: %s\n", strerror(errno));
-            }
-            exit(0);
+            goto cleanup;
         }
 
         // the typecast is unnecessary for C, but allows this code to be
         // compiled as C++
         if ((socket_info = (sock_info *) malloc(sizeof(sock_info))) == NULL) {
             fprintf(stderr, "malloc: %s\n", strerror(errno));
-            exit(0);
+            goto cleanup;
         }
         socket_info->client_socket_t = client_socket;
         socket_info->sin_addr_t = client_address.sin_addr;
         if (pthread_create(&thread_id[thread_index++], NULL, sock_thread,
                 socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
-            exit(0);
+            goto cleanup;
         }
 
         if (thread_index >= 50) {
@@ -125,12 +117,16 @@ int main(void)
             while (thread_index < 50) {
                 if (pthread_join(thread_id[thread_index++], NULL) != 0) {
                     fprintf(stderr, "pthread_join: %s\n", strerror(errno));
-                    exit(0);
+                    goto cleanup;
                 }
             }
             thread_index = 0;
         }
     }
 
+cleanup:
+    if (close(server_socket) < 0) {
+        fprintf(stderr, "close: %s\n", strerror(errno));
+    }
     return 0;
 }
