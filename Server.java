@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class Server {
+    private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static ClientHandler[] threads;
     private static int threadIndex;
@@ -56,7 +57,7 @@ public class Server {
 
     public static void main(String[] args) {
         try {
-            serverSocket = new ServerSocket(80);
+            serverSocket = new ServerSocket(PORT_NUMBER);
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {

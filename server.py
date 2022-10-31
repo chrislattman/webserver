@@ -3,6 +3,7 @@ import time
 from threading import Thread
 
 INT_MAX = 2147483647
+PORT_NUMBER = 8080
 
 
 class ClientHandler(Thread):
@@ -35,7 +36,7 @@ class ClientHandler(Thread):
 threads = []
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-server_address = ("", 80)
+server_address = ("", PORT_NUMBER)
 
 server_socket.bind(server_address)
 server_socket.listen(INT_MAX)

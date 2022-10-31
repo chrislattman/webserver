@@ -12,20 +12,27 @@
 #include <pthread.h>
 #include <time.h>
 
+static int PORT_NUMBER = 8080;
+
 typedef struct sock_info {
-    int             client_socket_t;
-    struct in_addr  sin_addr_t;
+    int             client_socket;
+    struct in_addr  sin_addr;
 } sock_info;
 
 static void *sock_thread(void *arg)
 {
-    char server_message[4096], content[64], content_length[32], date[64];
-    sock_info *socket_info = (sock_info *) arg;
-    int client_socket_t = socket_info->client_socket_t;
-    struct in_addr sin_addr_t = socket_info->sin_addr_t;
+    char server_message[4096], content[64], content_length[64], date[64];
+    sock_info *socket_info;
+    int client_socket;
+    struct in_addr sin_addr;
+    struct timespec tp;
 
-    time_t result = time(NULL);
-    struct tm *time_info = gmtime(&result);
+    socket_info = (sock_info *) arg;
+    client_socket = socket_info->client_socket;
+    sin_addr = socket_info->sin_addr;
+
+    clock_gettime(CLOCK_REALTIME, &tp);
+    struct tm *time_info = gmtime(&tp.tv_sec);
 
     strcpy(server_message, "HTTP/1.1 200 OK\n");
     strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
@@ -35,7 +42,7 @@ static void *sock_thread(void *arg)
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
-    strncat(content, inet_ntoa(sin_addr_t), 15);
+    strncat(content, inet_ntoa(sin_addr), 15);
     strcat(content, "\n");
 
     sprintf(content_length, "Content-Length: %zu\n", strlen(content));
@@ -43,15 +50,15 @@ static void *sock_thread(void *arg)
     strcat(server_message, "Content-Type: text/html\n\n");
     strcat(server_message, content);
 
-    if (send(client_socket_t, server_message, strlen(server_message), 0) < 0) {
+    if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
         goto cleanup;
     }
-    if (shutdown(client_socket_t, SHUT_WR) < 0) {
+    if (shutdown(client_socket, SHUT_WR) < 0) {
         fprintf(stderr, "shutdown: %s\n", strerror(errno));
         goto cleanup;
     }
-    if (close(client_socket_t) < 0) {
+    if (close(client_socket) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
         goto cleanup;
     }
@@ -75,7 +82,7 @@ int main(void)
     }
 
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(80);
+    server_address.sin_port = htons(PORT_NUMBER);
     server_address.sin_addr.s_addr = INADDR_ANY;
     if (bind(server_socket, (struct sockaddr *) &server_address,
             (socklen_t) sizeof(server_address)) < 0) {
@@ -104,8 +111,8 @@ int main(void)
             fprintf(stderr, "malloc: %s\n", strerror(errno));
             goto cleanup;
         }
-        socket_info->client_socket_t = client_socket;
-        socket_info->sin_addr_t = client_address.sin_addr;
+        socket_info->client_socket = client_socket;
+        socket_info->sin_addr = client_address.sin_addr;
         if (pthread_create(&thread_id[thread_index++], NULL, sock_thread,
                 socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
