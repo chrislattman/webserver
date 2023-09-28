@@ -12,7 +12,8 @@
 #include <pthread.h>
 #include <time.h>
 
-static int PORT_NUMBER = 8080;
+static const int PORT_NUMBER = 8080;
+static int server_socket;
 
 typedef struct sock_info {
     int             client_socket;
@@ -68,9 +69,17 @@ cleanup:
     return NULL;
 }
 
+void signal_handler(int signum)
+{
+    if (close(server_socket) < 0) {
+        fprintf(stderr, "close: %s\n", strerror(errno));
+    }
+    exit(0);
+}
+
 int main(void)
 {
-    int server_socket, client_socket, thread_index;
+    int client_socket, thread_index;
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_size = (socklen_t) sizeof(client_address);
     pthread_t thread_id[60];
@@ -83,12 +92,13 @@ int main(void)
 
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT_NUMBER);
-    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_addr.s_addr = INADDR_LOOPBACK;
     if (bind(server_socket, (struct sockaddr *) &server_address,
             (socklen_t) sizeof(server_address)) < 0) {
         fprintf(stderr, "bind: %s\n", strerror(errno));
         goto cleanup;
     }
+    signal(SIGINT, signal_handler);
 
     if (listen(server_socket, INT_MAX) < 0) {
         fprintf(stderr, "listen: %s\n", strerror(errno));

@@ -1,4 +1,5 @@
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -48,8 +49,7 @@ public class Server {
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
                 clientSocket.close();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -57,7 +57,8 @@ public class Server {
 
     public static void main(String[] args) {
         try {
-            serverSocket = new ServerSocket(PORT_NUMBER);
+            serverSocket = new ServerSocket(
+                PORT_NUMBER, Integer.MAX_VALUE, InetAddress.getLoopbackAddress());
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {
@@ -72,16 +73,12 @@ public class Server {
                     threadIndex = 0;
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
             try {
                 serverSocket.close();
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception exc) {
+                exc.printStackTrace();
             }
         }
     }

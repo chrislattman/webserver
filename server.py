@@ -1,15 +1,16 @@
+import signal
 import socket
 import time
+from sys import exit
 from threading import Thread
+from traceback import print_exception
 
 INT_MAX = 2147483647
 PORT_NUMBER = 8080
-
+server_socket: socket.socket
 
 class ClientHandler(Thread):
-    """Thread for client"""
-
-    def __init__(self, client_socket_arg, client_address_arg):
+    def __init__(self, client_socket_arg: socket.socket, client_address_arg: str):
         Thread.__init__(self)
         self.client_socket = client_socket_arg
         self.client_address = client_address_arg
@@ -32,22 +33,36 @@ class ClientHandler(Thread):
         self.client_socket.shutdown(socket.SHUT_WR)
         self.client_socket.close()
 
+def signal_handler(signum, frame):
+    server_socket.close()
+    exit(0)
 
-threads = []
+def main():
+    threads = []
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-server_address = ("", PORT_NUMBER)
+    global server_socket
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 
-server_socket.bind(server_address)
-server_socket.listen(INT_MAX)
+    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(length=4))
+    server_address = (localhost, PORT_NUMBER)
 
-while True:
-    client_socket, (client_address, port) = server_socket.accept()
-    newthread = ClientHandler(client_socket, client_address)
-    newthread.start()
-    threads.append(newthread)
+    server_socket.bind(server_address)
+    signal.signal(signal.SIGINT, signal_handler)
+    server_socket.listen(INT_MAX)
 
-    if len(threads) >= 50:
-        for t in threads:
-            t.join()
-        threads = []
+    try:
+        while True:
+            client_socket, (client_address, _) = server_socket.accept()
+            newthread = ClientHandler(client_socket, client_address)
+            newthread.start()
+            threads.append(newthread)
+
+            if len(threads) >= 50:
+                for t in threads:
+                    t.join()
+                threads = []
+    except Exception as e:
+        print_exception(e)
+        server_socket.close()
+
+main()

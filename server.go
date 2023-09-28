@@ -42,7 +42,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func main() {
-	ln, err := net.Listen("tcp", ":" + fmt.Sprint(PORT_NUMBER))
+	ln, err := net.Listen("tcp", "127.0.0.1:" + fmt.Sprint(PORT_NUMBER))
 	if err != nil {
 		fmt.Println("net.Listen:", err)
 		goto shutdown
