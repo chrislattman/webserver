@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var PORT_NUMBER int = 8080
+const PORT_NUMBER int = 8080
 
 func handleConnection(conn net.Conn) {
 	full_address := conn.RemoteAddr().String()

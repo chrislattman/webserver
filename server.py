@@ -43,7 +43,7 @@ def main():
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 
-    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(length=4))
+    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4))
     server_address = (localhost, PORT_NUMBER)
 
     server_socket.bind(server_address)
