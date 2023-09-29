@@ -21,7 +21,7 @@ typedef struct sock_info {
     struct in_addr  client_address;
 } sock_info;
 
-static void *sock_thread(void *arg)
+static void *client_handler(void *arg)
 {
     char server_message[4096], content[64], content_length[64], date[64];
     sock_info *socket_info;
@@ -124,7 +124,7 @@ int main(void)
         }
         socket_info->client_socket = client_socket;
         socket_info->client_address = client_connection.sin_addr;
-        if (pthread_create(&thread_id[thread_index++], NULL, sock_thread,
+        if (pthread_create(&thread_id[thread_index++], NULL, client_handler,
                 socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
             goto cleanup;
