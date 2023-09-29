@@ -3,11 +3,15 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
 const PORT_NUMBER int = 8080
+var ln net.Listener
 
 func handleConnection(conn net.Conn) {
 	full_address := conn.RemoteAddr().String()
@@ -41,12 +45,29 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
+func signal_handler() {
+	err := ln.Close()
+	if err != nil {
+		fmt.Println("net.Listener.Close:", err)
+	}
+	os.Exit(0)
+}
+
 func main() {
-	ln, err := net.Listen("tcp", "127.0.0.1:" + fmt.Sprint(PORT_NUMBER))
+	signal_channel := make(chan os.Signal, 1)
+	var err error
+	ln, err = net.Listen("tcp", "127.0.0.1:" + fmt.Sprint(PORT_NUMBER))
 	if err != nil {
 		fmt.Println("net.Listen:", err)
 		goto shutdown
 	}
+	signal.Notify(signal_channel, syscall.SIGINT)
+	go func() {
+		for {
+			<-signal_channel
+			signal_handler()
+		}
+	}()
 
 	for {
 		conn, err := ln.Accept()

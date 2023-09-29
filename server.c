@@ -18,7 +18,7 @@ static int server_socket;
 
 typedef struct sock_info {
     int             client_socket;
-    struct in_addr  sin_addr;
+    struct in_addr  client_address;
 } sock_info;
 
 static void *sock_thread(void *arg)
@@ -26,12 +26,12 @@ static void *sock_thread(void *arg)
     char server_message[4096], content[64], content_length[64], date[64];
     sock_info *socket_info;
     int client_socket;
-    struct in_addr sin_addr;
+    struct in_addr client_address;
     struct timespec tp;
 
     socket_info = (sock_info *) arg;
     client_socket = socket_info->client_socket;
-    sin_addr = socket_info->sin_addr;
+    client_address = socket_info->client_address;
 
     clock_gettime(CLOCK_REALTIME, &tp);
     struct tm *time_info = gmtime(&tp.tv_sec);
@@ -44,7 +44,7 @@ static void *sock_thread(void *arg)
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
-    strncat(content, inet_ntoa(sin_addr), 15);
+    strncat(content, inet_ntoa(client_address), 15);
     strcat(content, "\n");
 
     sprintf(content_length, "Content-Length: %zu\n", strlen(content));
@@ -81,8 +81,8 @@ void signal_handler(int signum)
 int main(void)
 {
     int client_socket, thread_index;
-    struct sockaddr_in server_address, client_address;
-    socklen_t client_address_size = (socklen_t) sizeof(client_address);
+    struct sockaddr_in server_connection, client_connection;
+    socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
     sock_info *socket_info;
 
@@ -91,11 +91,11 @@ int main(void)
         exit(0);
     }
 
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(PORT_NUMBER);
-    server_address.sin_addr.s_addr = INADDR_LOOPBACK;
-    if (bind(server_socket, (struct sockaddr *) &server_address,
-            (socklen_t) sizeof(server_address)) < 0) {
+    server_connection.sin_family = AF_INET;
+    server_connection.sin_port = htons(PORT_NUMBER);
+    server_connection.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (bind(server_socket, (struct sockaddr *) &server_connection,
+            (socklen_t) sizeof(server_connection)) < 0) {
         fprintf(stderr, "bind: %s\n", strerror(errno));
         goto cleanup;
     }
@@ -108,10 +108,10 @@ int main(void)
 
     thread_index = 0;
     while (1) {
-        memset(&client_address, 0, sizeof(client_address));
+        memset(&client_connection, 0, sizeof(client_connection));
         if ((client_socket = accept(server_socket,
-                (struct sockaddr *) &client_address,
-                &client_address_size)) < 0) {
+                (struct sockaddr *) &client_connection,
+                &client_connection_size)) < 0) {
             fprintf(stderr, "accept: %s\n", strerror(errno));
             goto cleanup;
         }
@@ -123,7 +123,7 @@ int main(void)
             goto cleanup;
         }
         socket_info->client_socket = client_socket;
-        socket_info->sin_addr = client_address.sin_addr;
+        socket_info->client_address = client_connection.sin_addr;
         if (pthread_create(&thread_id[thread_index++], NULL, sock_thread,
                 socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
