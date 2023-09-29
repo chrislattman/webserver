@@ -45,9 +45,9 @@ def main():
 
     localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4))
     server_address = (localhost, PORT_NUMBER)
-
     server_socket.bind(server_address)
     signal.signal(signal.SIGINT, signal_handler)
+
     server_socket.listen(INT_MAX)
 
     try:

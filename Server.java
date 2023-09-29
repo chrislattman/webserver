@@ -62,9 +62,8 @@ public class Server {
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {
-                threadIndex++;
                 threads[threadIndex] = new ClientHandler(serverSocket.accept());
-                threads[threadIndex].start();
+                threads[threadIndex++].start();
                 if (threadIndex >= 50) {
                     threadIndex = 0;
                     while (threadIndex < 50) {

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
+#include <signal.h>
 
 static const int PORT_NUMBER = 8080;
 static int server_socket;
