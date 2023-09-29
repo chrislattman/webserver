@@ -85,6 +85,8 @@ int main(void)
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
     sock_info *socket_info;
+    char client_message[4096], *headers_begin, *request_line;
+    long request_line_length;
 
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket: %s\n", strerror(errno));
@@ -115,6 +117,16 @@ int main(void)
             fprintf(stderr, "accept: %s\n", strerror(errno));
             goto cleanup;
         }
+
+        if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
+            fprintf(stderr, "recv: %s\n", strerror(errno));
+            goto cleanup;
+        }
+        headers_begin = strchr(client_message, '\n');
+        request_line_length = headers_begin - client_message;
+        request_line = strndup(client_message, (size_t) request_line_length);
+        printf("%s\n", request_line);
+        free(request_line);
 
         // the typecast is unnecessary for C, but allows this code to be
         // compiled as C++

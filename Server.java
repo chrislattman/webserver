@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -9,6 +11,9 @@ import java.util.TimeZone;
 public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
+    private static Socket clientSocket;
+    private static BufferedReader bufferedReader;
+    private static String requestLine;
     private static ClientHandler[] threads;
     private static int threadIndex;
 
@@ -19,12 +24,12 @@ public class Server {
         private StringBuilder content;
 
         public ClientHandler(Socket socket) {
-            clientSocket = socket;
+            this.clientSocket = socket;
         }
 
         public void run() {
             try {
-                out = new PrintWriter(clientSocket.getOutputStream(), true);
+                out = new PrintWriter(this.clientSocket.getOutputStream(), true);
 
                 currentTime = new SimpleDateFormat(
                         "'Date: 'EEE, d MMM yyyy HH:mm:ss z");
@@ -39,7 +44,7 @@ public class Server {
                 out.println("Accept-Ranges: bytes");
 
                 content.append("What's up? Your IP address is ");
-                content.append(clientSocket.getInetAddress().getHostAddress());
+                content.append(this.clientSocket.getInetAddress().getHostAddress());
                 content.append("\n");
 
                 out.println("Content-Length: " + content.length());
@@ -48,7 +53,7 @@ public class Server {
                 out.print(content.toString());
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
-                clientSocket.close();
+                this.clientSocket.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,7 +67,12 @@ public class Server {
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {
-                threads[threadIndex] = new ClientHandler(serverSocket.accept());
+                clientSocket = serverSocket.accept();
+                bufferedReader = new BufferedReader(
+                    new InputStreamReader(clientSocket.getInputStream()));
+                requestLine = bufferedReader.readLine();
+                System.out.println(requestLine);
+                threads[threadIndex] = new ClientHandler(clientSocket);
                 threads[threadIndex++].start();
                 if (threadIndex >= 50) {
                     threadIndex = 0;

@@ -45,7 +45,7 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func signal_handler() {
+func signalHandler() {
 	err := ln.Close()
 	if err != nil {
 		fmt.Println("net.Listener.Close:", err)
@@ -63,10 +63,8 @@ func main() {
 	}
 	signal.Notify(signal_channel, syscall.SIGINT)
 	go func() {
-		for {
-			<-signal_channel
-			signal_handler()
-		}
+		<-signal_channel
+		signalHandler()
 	}()
 
 	for {
@@ -75,6 +73,15 @@ func main() {
 			fmt.Println("net.Listener.Accept:", err)
 			goto shutdown
 		}
+		clientMessageBytes := make([]byte, 4096)
+		_, err = conn.Read(clientMessageBytes)
+		if err != nil {
+			fmt.Println("net.conn.Read:", err)
+			goto shutdown
+		}
+		clientMessage := string(clientMessageBytes)
+		request_line, _, _ := strings.Cut(clientMessage, "\n")
+		fmt.Println(request_line)
 		go handleConnection(conn)
 	}
 
