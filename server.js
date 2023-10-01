@@ -1,5 +1,6 @@
 "use strict";
 
+// import { createServer } from "node:net"; // this requires the file to be renamed as server.mjs
 const net = require("node:net");
 
 const PORT_NUMBER = 8080;
