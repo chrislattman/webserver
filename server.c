@@ -123,6 +123,7 @@ int main(void)
             goto cleanup;
         }
         headers_begin = strchr(client_message, '\n');
+        // headers_begin = strstr(client_message, "\n");
         request_line_length = headers_begin - client_message;
         request_line = strndup(client_message, (size_t) request_line_length);
         printf("%s\n", request_line);

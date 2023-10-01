@@ -81,6 +81,8 @@ func main() {
 		}
 		clientMessage := string(clientMessageBytes)
 		request_line, _, _ := strings.Cut(clientMessage, "\n")
+		// request_line := clientMessage[:strings.Index(clientMessage, "\n")]
+		// request_line := clientMessage[:strings.IndexRune(clientMessage, '\n')]
 		fmt.Println(request_line)
 		go handleConnection(conn)
 	}
