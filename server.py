@@ -47,6 +47,7 @@ def main():
     server_address = (localhost, PORT_NUMBER)
     server_socket.bind(server_address)
     signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGINT, lambda signum, frame: signal_handler) # For signal_handler with no arguments
 
     server_socket.listen(INT_MAX)
 

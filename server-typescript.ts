@@ -1,21 +1,23 @@
-"use strict";
-
-// import { createServer } from "node:net"; // Needs .mjs file extension or package.json file with "type": "module"
-const net = require("node:net");
+/**
+ * To compile this TypeScript file into JavaScript, run
+ * $ npm i -D typescript @types/node
+ * $ npx tsc --strict server-typescript.ts
+ */
+import { Socket, createServer } from "node:net";
+import { Buffer } from "node:buffer";
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
 
-function checkError(err) {
+function checkError(err: Error | undefined) {
     if (err !== undefined) {
         console.error(err);
     }
 }
 
 function main() {
-    // let server = createServer((socket) => {
-    let server = net.createServer((socket) => {
-        socket.on("data", (data) => {
+    let server = createServer((socket: Socket) => {
+        socket.on("data", (data: Buffer) => {
             let client_message = data.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\n"));
             console.log(request_line);
@@ -34,7 +36,7 @@ function main() {
         server_message += content;
         socket.end(server_message);
     });
-    server.on("error", (err) => {
+    server.on("error", (err: Error) => {
         console.error(err);
         server.close(checkError);
     });
