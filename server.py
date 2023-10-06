@@ -4,18 +4,29 @@ import time
 from sys import exit
 from threading import Thread
 from traceback import print_exception
+from typing_extensions import override
 
 INT_MAX = 2147483647
 PORT_NUMBER = 8080
 server_socket: socket.socket
 
 class ClientHandler(Thread):
+    """Thread class for each client connection."""
+
     def __init__(self, client_socket_arg: socket.socket, client_address_arg: str):
+        """Constructor for ClientHandler.
+
+        Args:
+            client_socket_arg (socket.socket): client socket
+            client_address_arg (str): client host address
+        """
         Thread.__init__(self)
         self.client_socket = client_socket_arg
         self.client_address = client_address_arg
 
-    def run(self):
+    @override
+    def run(self) -> None:
+        """Called by the start() function asynchronously."""
         server_message = "HTTP/1.1 200 OK\n"
         format_string = "Date: %a, %d %b %Y %X GMT\n"
         server_message += time.strftime(format_string, time.gmtime())
@@ -33,11 +44,18 @@ class ClientHandler(Thread):
         self.client_socket.shutdown(socket.SHUT_WR)
         self.client_socket.close()
 
-def signal_handler(signum, frame):
+def signal_handler(signum, frame) -> None:
+    """Signal handler for Ctrl + C (SIGINT).
+
+    Args:
+        signum (int): unused
+        frame (Frame): unused
+    """
     server_socket.close()
     exit(0)
 
-def main():
+def main() -> None:
+    """Main server loop."""
     threads = []
 
     global server_socket

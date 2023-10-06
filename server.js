@@ -6,12 +6,20 @@ const net = require("node:net");
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
 
+/**
+ * Prints out error if it isn't undefined.
+ *
+ * @param {Error | undefined} err possible error
+ */
 function checkError(err) {
     if (err !== undefined) {
         console.error(err);
     }
 }
 
+/**
+ * Main server loop.
+ */
 function main() {
     // let server = createServer((socket) => {
     let server = net.createServer((socket) => {

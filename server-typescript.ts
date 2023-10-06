@@ -9,12 +9,20 @@ import { Buffer } from "node:buffer";
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
 
+/**
+ * Prints out error if it isn't undefined.
+ *
+ * @param err possible error
+ */
 function checkError(err: Error | undefined) {
     if (err !== undefined) {
         console.error(err);
     }
 }
 
+/**
+ * Main server loop.
+ */
 function main() {
     let server = createServer((socket: Socket) => {
         socket.on("data", (data: Buffer) => {

@@ -21,6 +21,12 @@ typedef struct sock_info {
     struct in_addr  client_address;
 } sock_info;
 
+/**
+ * @brief Thread that handles each client connection
+ *
+ * @param arg pointer to sock_info struct
+ * @return void*
+ */
 static void *client_handler(void *arg)
 {
     char server_message[4096], content[64], content_length[64], date[64];
@@ -70,6 +76,11 @@ cleanup:
     return NULL;
 }
 
+/**
+ * @brief Signal handler for Ctrl + C (SIGINT).
+ *
+ * @param signum unused
+ */
 void signal_handler(int signum)
 {
     if (close(server_socket) < 0) {
@@ -78,6 +89,11 @@ void signal_handler(int signum)
     exit(0);
 }
 
+/**
+ * @brief Main server loop for the web server.
+ *
+ * @return 0
+ */
 int main(void)
 {
     int client_socket, thread_index;

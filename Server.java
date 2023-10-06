@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+/**
+ * Server class which contains the main server loop and client thread.
+ */
 public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
@@ -17,16 +20,27 @@ public class Server {
     private static ClientHandler[] threads;
     private static int threadIndex;
 
+    /**
+     * Handles client connections.
+     */
     private static class ClientHandler extends Thread {
         private Socket clientSocket;
         private PrintWriter out;
         private SimpleDateFormat currentTime;
         private StringBuilder content;
 
+        /**
+         * Constructor for client connection thread.
+         *
+         * @param socket socket of client
+         */
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
         }
 
+        /**
+         * Called by the start() function asynchronously.
+         */
         public void run() {
             try {
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
@@ -60,6 +74,11 @@ public class Server {
         }
     }
 
+    /**
+     * Main server loop.
+     *
+     * @param args unused
+     */
     public static void main(String[] args) {
         try {
             serverSocket = new ServerSocket(
