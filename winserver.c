@@ -1,4 +1,4 @@
-// compiled with mingw-w64: gcc -o winserver winserver.c -lws2_32
+// Compiled with mingw-w64 on MSYS2: gcc -o winserver winserver.c -lws2_32
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
