@@ -12,7 +12,7 @@
 
 static const int PORT_NUMBER = 8080;
 static SOCKET server_socket;
-static char error_message[1024] = {0};
+static char error_message[1024];
 
 typedef struct sock_info {
     SOCKET          client_socket;
@@ -85,7 +85,7 @@ DWORD WINAPI client_handler(LPVOID arg)
         fprintf(stderr, "send: %s\n", StrGetLastError(WSAGetLastError()));
         goto cleanup;
     }
-    if (shutdown(client_socket, SD_BOTH) < 0) {
+    if (shutdown(client_socket, SD_SEND) < 0) {
         fprintf(stderr, "shutdown: %s\n", StrGetLastError(WSAGetLastError()));
         goto cleanup;
     }
