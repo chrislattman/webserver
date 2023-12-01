@@ -1,5 +1,5 @@
 // Compiled with mingw-w64 on MSYS2: gcc -o winserver winserver.c -lws2_32
-// Could also use pthread-style functions with mingw-w64 by installing libwinpthreads (-pthread links it, if needed)
+// Could also use pthread-style functions with mingw-w64 by installing libwinpthreads (-pthread statically links it, if needed)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
