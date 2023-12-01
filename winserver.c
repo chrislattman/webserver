@@ -1,7 +1,9 @@
 // Compiled with mingw-w64 on MSYS2: gcc -o winserver winserver.c -lws2_32
-// Could also use pthread-style functions with mingw-w64 by installing
-// winpthreads and statically linking it with -static [-pthread] or by manually
-// linking /ucrt64/bin/libwinpthread.a
+// This statically links libws2_32.a, which contains small stubs that
+// redirect to ws2_32.dll (much like ws2_32.lib)
+
+// Can also use pthread-style functions with mingw-w64 by installing
+// winpthreads and statically linking it with -static [-pthread]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
