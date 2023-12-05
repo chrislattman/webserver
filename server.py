@@ -61,7 +61,7 @@ def main() -> None:
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 
-    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4))
+    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4, "big"))
     server_address = (localhost, PORT_NUMBER)
     server_socket.bind(server_address)
     signal.signal(signal.SIGINT, signal_handler)
