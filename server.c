@@ -22,7 +22,7 @@ typedef struct sock_info {
 } sock_info;
 
 /**
- * @brief Thread that handles each client connection
+ * @brief Thread that handles each client connection.
  *
  * @param arg pointer to sock_info struct
  * @return void*

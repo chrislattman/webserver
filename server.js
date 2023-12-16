@@ -18,7 +18,7 @@ function checkError(err) {
 }
 
 /**
- * Main server loop.
+ * Main server loop for the web server.
  */
 function main() {
     // let server = createServer((socket) => {

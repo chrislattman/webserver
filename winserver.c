@@ -50,7 +50,7 @@ char *StrGetLastError(int error_code)
 }
 
 /**
- * @brief Thread that handles each client connection
+ * @brief Thread that handles each client connection.
  *
  * @param arg pointer to sock_info struct
  * @return 0

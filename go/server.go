@@ -13,6 +13,7 @@ import (
 const PORT_NUMBER int = 8080
 var ln net.Listener
 
+// Handles client connections.
 func handleConnection(conn net.Conn) {
 	full_address := conn.RemoteAddr().String()
 	full_address = strings.ReplaceAll(full_address, "[", "")
@@ -45,6 +46,7 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
+// Signal handler for Ctrl + C (SIGINT).
 func signalHandler() {
 	err := ln.Close()
 	if err != nil {
@@ -53,6 +55,7 @@ func signalHandler() {
 	os.Exit(0)
 }
 
+// Main server loop for the web server.
 func main() {
 	signal_channel := make(chan os.Signal, 1)
 	var err error

@@ -75,7 +75,7 @@ public class Server {
     }
 
     /**
-     * Main server loop.
+     * Main server loop for the web server.
      *
      * @param args unused
      */
