@@ -13,7 +13,7 @@
 #include <time.h>
 #include <signal.h>
 
-static const int PORT_NUMBER = 8080;
+static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
 
 typedef struct sock_info {
@@ -94,9 +94,10 @@ void signal_handler(int signum)
  *
  * @return 0
  */
-int main(void)
+int main(int argc, char *argv[])
 {
-    int client_socket, thread_index;
+    unsigned short port_number = 0;
+    int client_socket, thread_index, reuseaddr = 1;
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
@@ -104,13 +105,25 @@ int main(void)
     char client_message[4096], *headers_begin, *request_line;
     long request_line_length;
 
+    if (argc == 2) {
+        port_number = (unsigned short) atoi(argv[1]);
+    }
+
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket: %s\n", strerror(errno));
         exit(0);
     }
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) < 0) {
+        fprintf(stderr, "setsockopt: %s\n", strerror(errno));
+        exit(0);
+    }
 
     server_connection.sin_family = AF_INET;
-    server_connection.sin_port = htons(PORT_NUMBER);
+    if (port_number >= 10000) {
+        server_connection.sin_port = htons(port_number);
+    } else {
+        server_connection.sin_port = htons(PORT_NUMBER);
+    }
     server_connection.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     if (bind(server_socket, (struct sockaddr *) &server_connection,
             (socklen_t) sizeof(server_connection)) < 0) {

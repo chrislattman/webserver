@@ -80,9 +80,21 @@ public class Server {
      * @param args unused
      */
     public static void main(String[] args) {
+        int port_number = 0;
+
+        if (args.length == 1) {
+            port_number = Integer.parseInt(args[0]) & 65535;
+        }
+
         try {
-            serverSocket = new ServerSocket(
-                PORT_NUMBER, Integer.MAX_VALUE, InetAddress.getLoopbackAddress());
+            if (port_number >= 10000) {
+                serverSocket = new ServerSocket(port_number, Integer.MAX_VALUE,
+                    InetAddress.getLoopbackAddress());
+            } else {
+                serverSocket = new ServerSocket(PORT_NUMBER, Integer.MAX_VALUE,
+                    InetAddress.getLoopbackAddress());
+            }
+            serverSocket.setReuseAddress(true);
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {

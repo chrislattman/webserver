@@ -18,9 +18,27 @@ function checkError(err) {
 }
 
 /**
+ * Signal handler for Ctrl + C (SIGINT).
+ *
+ * @param {net.Server} server server to close
+ */
+function signal_handler(server) {
+    process.on("SIGINT", () => {
+        server.close(checkError);
+        process.exit(0);
+    });
+}
+
+/**
  * Main server loop for the web server.
  */
 function main() {
+    let port_number = 0;
+
+    if (process.argv.length == 3) {
+        port_number = parseInt(process.argv[2]) & 65535;
+    }
+
     // let server = createServer((socket) => {
     let server = net.createServer((socket) => {
         socket.on("data", (data) => {
@@ -46,12 +64,17 @@ function main() {
         console.error(err);
         server.close(checkError);
     });
-    server.listen(PORT_NUMBER, "127.0.0.1", INT_MAX, () => {
-        process.on("SIGINT", () => {
-            server.close(checkError);
-            process.exit(0);
+    if (port_number >= 10000) {
+        // SO_REUSEADDR is set by default
+        server.listen(port_number, "127.0.0.1", INT_MAX, () => {
+            signal_handler(server);
         });
-    });
+    } else {
+        // SO_REUSEADDR is set by default
+        server.listen(PORT_NUMBER, "127.0.0.1", INT_MAX, () => {
+            signal_handler(server);
+        });
+    }
 }
 
 main();

@@ -5,12 +5,14 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 )
 
 const PORT_NUMBER int = 8080
+
 var ln net.Listener
 
 // Handles client connections.
@@ -57,9 +59,20 @@ func signalHandler() {
 
 // Main server loop for the web server.
 func main() {
+	var port_number = 0
+	if len(os.Args) == 2 {
+		port_number, _ = strconv.Atoi(os.Args[1])
+		port_number &= 65535
+	}
+
 	signal_channel := make(chan os.Signal, 1)
 	var err error
-	ln, err = net.Listen("tcp", "127.0.0.1:" + fmt.Sprint(PORT_NUMBER))
+	// No default way of setting SO_REUSEADDR
+	if port_number >= 10000 {
+		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(port_number))
+	} else {
+		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(PORT_NUMBER))
+	}
 	if err != nil {
 		fmt.Println("net.Listen:", err)
 		goto shutdown

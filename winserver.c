@@ -15,7 +15,7 @@
 #include <time.h>
 #include <signal.h>
 
-static const int PORT_NUMBER = 8080;
+static const unsigned short PORT_NUMBER = 8080;
 static SOCKET server_socket;
 static char error_message[1024];
 
@@ -140,9 +140,10 @@ char *strndup(const char *src, size_t size)
  */
 int main(void)
 {
+    unsigned short port_number = 0;
     WSADATA wsaData;
     SOCKET client_socket;
-    int err, thread_index;
+    int err, thread_index, reuseaddr = 1;
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     HANDLE thread_handle[60];
@@ -150,6 +151,10 @@ int main(void)
     sock_info *socket_info;
     char client_message[4096], *headers_begin, *request_line;
     long request_line_length;
+
+    if (argc == 2) {
+        port_number = (unsigned short) atoi(argv[1]);
+    }
 
     if ((err = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
         fprintf(stderr, "WSAStartup error: %d\n", err);
@@ -160,9 +165,17 @@ int main(void)
         fprintf(stderr, "socket: %s\n", StrGetLastError(WSAGetLastError()));
         exit(0);
     }
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) < 0) {
+        fprintf(stderr, "setsockopt: %s\n", strerror(errno));
+        exit(0);
+    }
 
     server_connection.sin_family = AF_INET;
-    server_connection.sin_port = htons(PORT_NUMBER);
+    if (port_number >= 10000) {
+        server_connection.sin_port = htons(port_number);
+    } else {
+        server_connection.sin_port = htons(PORT_NUMBER);
+    }
     server_connection.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     if (bind(server_socket, (struct sockaddr *) &server_connection,
             (socklen_t) sizeof(server_connection)) < 0) {

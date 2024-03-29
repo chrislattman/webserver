@@ -1,7 +1,7 @@
 import signal
 import socket
+import sys
 import time
-from sys import exit
 from threading import Thread
 from traceback import print_exception
 from typing_extensions import override
@@ -63,17 +63,25 @@ def signal_handler(signum, frame) -> None:
         frame (Frame): unused
     """
     server_socket.close()
-    exit(0)
+    sys.exit(0)
 
 def main() -> None:
     """Main server loop for the web server."""
     threads = []
+    port_number = 0
+
+    if len(sys.argv) == 2:
+        port_number = int(sys.argv[1]) & 65535
 
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4, "big"))
-    server_address = (localhost, PORT_NUMBER)
+    if port_number >= 10000:
+        server_address = (localhost, port_number)
+    else:
+        server_address = (localhost, PORT_NUMBER)
     server_socket.bind(server_address)
     signal.signal(signal.SIGINT, signal_handler)
     # signal.signal(signal.SIGINT, lambda signum, frame: signal_handler) # For signal_handler with no arguments
