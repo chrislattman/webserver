@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     unsigned short port_number = 0;
     WSADATA wsaData;
     SOCKET client_socket;
-    int err, thread_index, reuseaddr = 1;
+    int err, thread_index;
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     HANDLE thread_handle[60];
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "socket: %s\n", StrGetLastError(WSAGetLastError()));
         exit(0);
     }
-    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) < 0) {
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, "1", sizeof(char *)) < 0) {
         fprintf(stderr, "setsockopt: %s\n", strerror(errno));
         exit(0);
     }
