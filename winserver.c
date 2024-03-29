@@ -138,7 +138,7 @@ char *strndup(const char *src, size_t size)
  *
  * @return 0
  */
-int main(void)
+int main(int argc, char *argv[])
 {
     unsigned short port_number = 0;
     WSADATA wsaData;
