@@ -81,7 +81,7 @@ cleanup:
  *
  * @param signum unused
  */
-void signal_handler(int signum)
+void signal_handler(__attribute__((unused)) int signum)
 {
     if (close(server_socket) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
