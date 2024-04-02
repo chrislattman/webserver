@@ -33,14 +33,15 @@ static void *client_handler(void *arg)
     sock_info *socket_info;
     int client_socket;
     struct in_addr client_address;
-    struct timespec tp;
+    time_t curr_time;
+    struct tm *time_info;
 
     socket_info = (sock_info *) arg;
     client_socket = socket_info->client_socket;
     client_address = socket_info->client_address;
 
-    clock_gettime(CLOCK_REALTIME, &tp);
-    struct tm *time_info = gmtime(&tp.tv_sec);
+    curr_time = time(NULL);
+    time_info = gmtime(&curr_time);
 
     strcpy(server_message, "HTTP/1.1 200 OK\n");
     strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
@@ -154,7 +155,12 @@ int main(int argc, char *argv[])
         headers_begin = strchr(client_message, '\n');
         // headers_begin = strstr(client_message, "\n");
         request_line_length = headers_begin - client_message;
-        request_line = strndup(client_message, (size_t) request_line_length);
+        request_line = calloc(request_line_length + 1, sizeof(char));
+        if (request_line == NULL) {
+            fprintf(stderr, "malloc: %s\n", strerror(errno));
+            goto cleanup;
+        }
+        strncpy(request_line, client_message, request_line_length);
         printf("%s\n", request_line);
         free(request_line);
 
