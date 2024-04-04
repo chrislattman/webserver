@@ -32,7 +32,7 @@ fn main() {
         port_number = args1.parse().unwrap();
     }
 
-    if port_number > 10000 {
+    if port_number >= 10000 {
         // SO_REUSEADDR is set by default
         listener = TcpListener::bind(
             "127.0.0.1:".to_owned() + &port_number.to_string()).unwrap()
