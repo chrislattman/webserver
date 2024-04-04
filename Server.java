@@ -54,7 +54,7 @@ public class Server {
                 out.println("HTTP/1.1 200 OK");
                 out.println(currentTime.format(new Date()));
                 out.println("Server: Web Server");
-                out.println("Last-Modified: Fri, 08 Apr 2022 12:35:05 GMT");
+                out.println("Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT");
                 out.println("Accept-Ranges: bytes");
 
                 content.append("What's up? Your IP address is ");

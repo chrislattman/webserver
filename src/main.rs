@@ -1,13 +1,16 @@
 use std::{env, io::{BufRead, BufReader, Write}, net::{TcpListener, TcpStream}, thread};
 
+use chrono::Utc;
+
 const PORT_NUMBER: u16 = 8080;
 
 /// Thread that handles each client connection.
 fn client_handler(mut stream: TcpStream) {
     let mut server_message = "HTTP/1.1 200 OK\n".to_string();
-    // get current timestamp with chrono
+    let date = Utc::now().to_rfc2822().replace(" +0000", "");
+    server_message += &format!("Date: {} GMT\n", date);
     server_message += "Server: Web Server\n";
-    server_message += "Last-Modified: Fri, 08 Apr 2022 12:35:05 GMT\n";
+    server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
     server_message += "Accept-Ranges: bytes\n";
 
     let client_address = stream.peer_addr().unwrap().ip();

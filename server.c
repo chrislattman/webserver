@@ -47,7 +47,7 @@ static void *client_handler(void *arg)
     strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
     strcat(server_message, date);
     strcat(server_message, "Server: Web Server\n");
-    strcat(server_message, "Last-Modified: Fri, 08 Apr 2022 12:35:05 GMT\n");
+    strcat(server_message, "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n");
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
