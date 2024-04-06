@@ -24,11 +24,6 @@ typedef struct sock_info {
     struct in_addr  client_address;
 } sock_info;
 
-int clock_gettime(int clock_id, struct timespec *tp)
-{
-    return timespec_get(tp, TIME_UTC);
-}
-
 char *StrGetLastError(int error_code)
 {
     LPSTR messageBuffer = NULL;
@@ -61,14 +56,15 @@ DWORD WINAPI client_handler(LPVOID arg)
     sock_info *socket_info;
     SOCKET client_socket;
     struct in_addr client_address;
-    struct timespec tp;
+    time_t curr_time;
+    struct tm *time_info;
 
     socket_info = (sock_info *) arg;
     client_socket = socket_info->client_socket;
     client_address = socket_info->client_address;
 
-    clock_gettime(0, &tp);
-    struct tm *time_info = gmtime(&tp.tv_sec);
+    curr_time = time(NULL);
+    time_info = gmtime(&curr_time);
 
     strcpy(server_message, "HTTP/1.1 200 OK\n");
     strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
@@ -146,7 +142,7 @@ int main(int argc, char *argv[])
     int err, thread_index;
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
-    HANDLE thread_handle[60];
+    HANDLE thread_handle[60], new_thread;
     DWORD thread_id[60];
     sock_info *socket_info;
     char client_message[4096], *headers_begin, *request_line;
@@ -218,11 +214,12 @@ int main(int argc, char *argv[])
         }
         socket_info->client_socket = client_socket;
         socket_info->client_address = client_connection.sin_addr;
-        if ((thread_handle[thread_index] = CreateThread(NULL, 0, client_handler,
+        if ((new_thread = CreateThread(NULL, 0, client_handler,
                 socket_info, 0, &thread_id[thread_index++])) == NULL) {
             fprintf(stderr, "CreateThread: %s\n", StrGetLastError(GetLastError()));
             goto cleanup;
         }
+        thread_handle[thread_index] = new_thread;
 
         if (thread_index >= 50) {
             thread_index = 0;
