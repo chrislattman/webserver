@@ -61,20 +61,16 @@ static void *client_handler(void *arg)
 
     if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
-        goto cleanup;
+        return NULL;
     }
     if (shutdown(client_socket, SHUT_WR) < 0) {
         fprintf(stderr, "shutdown: %s\n", strerror(errno));
-        goto cleanup;
+        return NULL;
     }
     if (close(client_socket) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
-        goto cleanup;
+        return NULL;
     }
-
-cleanup:
-    free(socket_info);
-    return NULL;
 }
 
 /**
@@ -102,7 +98,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
-    sock_info *socket_info;
+    sock_info socket_info;
     char client_message[4096], *headers_begin, *request_line;
     long request_line_length;
 
@@ -164,16 +160,12 @@ int main(int argc, char *argv[])
         printf("%s\n", request_line);
         free(request_line);
 
-        // the typecast is unnecessary for C, but allows this code to be
-        // compiled as C++
-        if ((socket_info = (sock_info *) malloc(sizeof(sock_info))) == NULL) {
-            fprintf(stderr, "malloc: %s\n", strerror(errno));
-            goto cleanup;
-        }
-        socket_info->client_socket = client_socket;
-        socket_info->client_address = client_connection.sin_addr;
+        socket_info = (sock_info) {
+            .client_socket = client_socket,
+            .client_address = client_connection.sin_addr,
+        };
         if (pthread_create(&thread_id[thread_index++], NULL, client_handler,
-                socket_info) != 0) {
+                &socket_info) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(errno));
             goto cleanup;
         }

@@ -84,20 +84,16 @@ DWORD WINAPI client_handler(LPVOID arg)
 
     if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", StrGetLastError(WSAGetLastError()));
-        goto cleanup;
+        return 0;
     }
     if (shutdown(client_socket, SD_SEND) < 0) {
         fprintf(stderr, "shutdown: %s\n", StrGetLastError(WSAGetLastError()));
-        goto cleanup;
+        return 0;
     }
     if (closesocket(client_socket) < 0) {
         fprintf(stderr, "closesocket: %s\n", StrGetLastError(WSAGetLastError()));
-        goto cleanup;
+        return 0;
     }
-
-cleanup:
-    free(socket_info);
-    return 0;
 }
 
 /**
@@ -112,21 +108,6 @@ void signal_handler(int signum)
     }
     WSACleanup();
     exit(0);
-}
-
-char *strndup(const char *src, size_t size)
-{
-    size_t len = strnlen(src, size);
-    len = len < size ? len : size;
-    // the typecast is unnecessary for C, but allows this code to be
-    // compiled as C++
-    char *dst = (char *) malloc(len + 1);
-    if (!dst) {
-        return NULL;
-    }
-    memcpy(dst, src, len);
-    dst[len] = '\0';
-    return dst;
 }
 
 /**
@@ -144,7 +125,7 @@ int main(int argc, char *argv[])
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     HANDLE thread_handle[60], new_thread;
     DWORD thread_id[60];
-    sock_info *socket_info;
+    sock_info socket_info;
     char client_message[4096], *headers_begin, *request_line;
     long request_line_length;
 
@@ -202,20 +183,21 @@ int main(int argc, char *argv[])
         headers_begin = strchr(client_message, '\n');
         // headers_begin = strstr(client_message, "\n");
         request_line_length = headers_begin - client_message;
-        request_line = strndup(client_message, (size_t) request_line_length);
-        printf("%s\n", request_line);
-        free(request_line);
-
-        // the typecast is unnecessary for C, but allows this code to be
-        // compiled as C++
-        if ((socket_info = (sock_info *) malloc(sizeof(sock_info))) == NULL) {
+        request_line = calloc(request_line_length + 1, sizeof(char));
+        if (request_line == NULL) {
             fprintf(stderr, "malloc: %s\n", strerror(errno));
             goto cleanup;
         }
-        socket_info->client_socket = client_socket;
-        socket_info->client_address = client_connection.sin_addr;
+        strncpy(request_line, client_message, request_line_length);
+        printf("%s\n", request_line);
+        free(request_line);
+
+        socket_info = (sock_info) {
+            .client_socket = client_socket,
+            .client_address = client_connection.sin_addr,
+        };
         if ((new_thread = CreateThread(NULL, 0, client_handler,
-                socket_info, 0, &thread_id[thread_index++])) == NULL) {
+                &socket_info, 0, &thread_id[thread_index++])) == NULL) {
             fprintf(stderr, "CreateThread: %s\n", StrGetLastError(GetLastError()));
             goto cleanup;
         }
