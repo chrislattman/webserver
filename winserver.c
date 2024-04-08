@@ -94,6 +94,7 @@ DWORD WINAPI client_handler(LPVOID arg)
         fprintf(stderr, "closesocket: %s\n", StrGetLastError(WSAGetLastError()));
         return 0;
     }
+    return 0;
 }
 
 /**

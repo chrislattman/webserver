@@ -25,7 +25,7 @@ typedef struct sock_info {
  * @brief Thread that handles each client connection.
  *
  * @param arg pointer to sock_info struct
- * @return void*
+ * @return NULL
  */
 static void *client_handler(void *arg)
 {
@@ -71,6 +71,7 @@ static void *client_handler(void *arg)
         fprintf(stderr, "close: %s\n", strerror(errno));
         return NULL;
     }
+    return NULL;
 }
 
 /**
