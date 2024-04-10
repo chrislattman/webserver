@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     }
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, "1", sizeof(char *)) < 0) {
         fprintf(stderr, "setsockopt: %s\n", strerror(errno));
-        exit(0);
+        goto cleanup;
     }
 
     server_connection.sin_family = AF_INET;

@@ -40,10 +40,10 @@ fn main() {
     }
 
     let listener = if port_number >= 10000 {
-        // SO_REUSEADDR is set by default
+        // No default way of setting SO_REUSEADDR
         TcpListener::bind("127.0.0.1:".to_owned() + &port_number.to_string()).unwrap()
     } else {
-        // SO_REUSEADDR is set by default
+        // No default way of setting SO_REUSEADDR
         TcpListener::bind("127.0.0.1:".to_owned() + &PORT_NUMBER.to_string()).unwrap()
     };
 
