@@ -51,9 +51,9 @@ fn main() {
 
     for incoming_stream in listener.incoming() {
         // let mut stream = incoming_stream.unwrap();
-        // let mut buf = [0u8; 4096];
-        // stream.read(&mut buf).unwrap();
-        // let client_message = str::from_utf8(&buf).unwrap();
+        // let mut client_message_bytes = [0u8; 4096];
+        // stream.read(&mut client_message_bytes).unwrap();
+        // let client_message = str::from_utf8(&client_message_bytes).unwrap();
         // let (request_line, _) = client_message.split_once("\n").unwrap();
         let stream = incoming_stream.unwrap();
         let buf_reader = BufReader::new(&stream);

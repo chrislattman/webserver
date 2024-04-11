@@ -17,6 +17,9 @@ public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
+    // private static byte[] clientMessageBytes;
+    // private static BufferedInputStream in;
+    // private static String clientMessage;
     private static BufferedReader bufferedReader;
     private static String requestLine;
     private static ClientHandler[] threads;
@@ -101,12 +104,11 @@ public class Server {
             threadIndex = 0;
             while (true) {
                 clientSocket = serverSocket.accept();
-                // byte[] buf = new byte[4096];
-                // BufferedInputStream in = new BufferedInputStream(
-                //     clientSocket.getInputStream());
-                // in.read(buf);
-                // requestLine = new String(buf, StandardCharsets.UTF_8);
-                // requestLine = requestLine.split("\n", 2)[0];
+                // clientMessageBytes = new byte[4096];
+                // in = new BufferedInputStream(clientSocket.getInputStream());
+                // in.read(clientMessageBytes);
+                // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
+                // requestLine = clientMessage.split("\n", 2)[0];
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();

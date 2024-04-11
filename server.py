@@ -91,7 +91,8 @@ def main() -> None:
     try:
         while True:
             client_socket, (client_address, _) = server_socket.accept()
-            client_message = client_socket.recv(4096).decode()
+            client_message_bytes = client_socket.recv(4096)
+            client_message = client_message_bytes.decode()
             request_line = client_message[:client_message.find("\n")]
             print(request_line)
             newthread = ClientHandler(client_socket, client_address)

@@ -41,8 +41,8 @@ function main() {
 
     // let server = createServer((socket) => {
     let server = net.createServer((socket) => {
-        socket.on("data", (data) => {
-            let client_message = data.toString();
+        socket.on("data", (client_message_bytes) => {
+            let client_message = client_message_bytes.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\n"));
             console.log(request_line);
         });

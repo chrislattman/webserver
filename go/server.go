@@ -20,7 +20,7 @@ func handleConnection(conn net.Conn) {
 	full_address := conn.RemoteAddr().String()
 	full_address = strings.ReplaceAll(full_address, "[", "")
 	full_address = strings.ReplaceAll(full_address, "]", "")
-	lastIndex := strings.LastIndex(full_address, ":")
+	last_index := strings.LastIndex(full_address, ":")
 
 	server_message := "HTTP/1.1 200 OK\n"
 	date := time.Now().UTC().Format(time.RFC1123)
@@ -30,7 +30,7 @@ func handleConnection(conn net.Conn) {
 	server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
 	server_message += "Accept-Ranges: bytes\n"
 
-	content := "What's up? Your IP address is " + full_address[:lastIndex] + "\n"
+	content := "What's up? Your IP address is " + full_address[:last_index] + "\n"
 
 	server_message += "Content-Length: " + fmt.Sprintln(len(content))
 	server_message += "Content-Type: text/html\n\n"
@@ -89,14 +89,14 @@ func main() {
 			fmt.Println("net.Listener.Accept:", err)
 			goto shutdown
 		}
-		clientMessageBytes := make([]byte, 4096)
-		_, err = conn.Read(clientMessageBytes)
+		client_message_bytes := make([]byte, 4096)
+		_, err = conn.Read(client_message_bytes)
 		if err != nil {
 			fmt.Println("net.conn.Read:", err)
 			goto shutdown
 		}
-		clientMessage := string(clientMessageBytes)
-		request_line, _, _ := strings.Cut(clientMessage, "\n")
+		client_message := string(client_message_bytes)
+		request_line, _, _ := strings.Cut(client_message, "\n")
 		// request_line := clientMessage[:strings.Index(clientMessage, "\n")]
 		// request_line := clientMessage[:strings.IndexRune(clientMessage, '\n')]
 		fmt.Println(request_line)
