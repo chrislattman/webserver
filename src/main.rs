@@ -55,7 +55,6 @@ fn main() {
         // stream.read(&mut buf).unwrap();
         // let client_message = str::from_utf8(&buf).unwrap();
         // let (request_line, _) = client_message.split_once("\n").unwrap();
-        // println!("{}", request_line);
         let stream = incoming_stream.unwrap();
         let buf_reader = BufReader::new(&stream);
         let request_line = buf_reader.lines().next().unwrap().unwrap();
