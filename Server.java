@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+// import java.io.BufferedInputStream;
+// import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -99,6 +101,12 @@ public class Server {
             threadIndex = 0;
             while (true) {
                 clientSocket = serverSocket.accept();
+                // byte[] buf = new byte[4096];
+                // BufferedInputStream in = new BufferedInputStream(
+                //     clientSocket.getInputStream());
+                // in.read(buf);
+                // requestLine = new String(buf, StandardCharsets.UTF_8);
+                // requestLine = requestLine.split("\n", 2)[0];
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();
