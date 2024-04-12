@@ -108,4 +108,5 @@ def main() -> None:
         print_exception(e)
         server_socket.close()
 
-main()
+if __name__ == "__main__":
+    main()
