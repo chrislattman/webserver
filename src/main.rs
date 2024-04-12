@@ -41,6 +41,8 @@ fn main() {
         port_number = args1.parse().unwrap();
     }
 
+    // To connect to a server:
+    // let sock = TcpStream::connect("127.0.0.1:5000").unwrap();
     let listener = if port_number >= 10000 {
         // No default way of setting SO_REUSEADDR
         TcpListener::bind("127.0.0.1:".to_owned() + &port_number.to_string()).unwrap()

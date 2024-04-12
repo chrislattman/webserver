@@ -66,6 +66,7 @@ func main() {
 
 	signal_channel := make(chan os.Signal, 1)
 	var err error
+
 	// No default way of setting SO_REUSEADDR
 	if port_number >= 10000 {
 		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(port_number))
@@ -83,6 +84,8 @@ func main() {
 	}()
 
 	for {
+		// To connect to a server:
+		// sock, _ := net.Dial("tcp", "127.0.0.1:5000")
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println("net.Listener.Accept:", err)

@@ -103,6 +103,8 @@ public class Server {
             threads = new ClientHandler[60];
             threadIndex = 0;
             while (true) {
+                // To connect to a server:
+                // Socket sock = new Socket("127.0.0.1", 5000);
                 clientSocket = serverSocket.accept();
                 // clientMessageBytes = new byte[4096];
                 // in = new BufferedInputStream(clientSocket.getInputStream());

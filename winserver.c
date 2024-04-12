@@ -170,6 +170,13 @@ int main(int argc, char *argv[])
     thread_index = 0;
     while (1) {
         memset(&client_connection, 0, sizeof(client_connection));
+        // To connect to a server:
+        // struct sockaddr_in connection;
+        // connection.sin_family = AF_INET;
+        // connection.sin_port = htons(5000);
+        // connection.sin_addr.s_addr = inet_addr("127.0.0.1");
+        // SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+        // connect(sock, (struct sockaddr *) &connection, sizeof(connection));
         if ((client_socket = accept(server_socket,
                 (struct sockaddr *) &client_connection,
                 &client_connection_size)) == INVALID_SOCKET) {

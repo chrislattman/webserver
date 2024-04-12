@@ -90,6 +90,9 @@ def main() -> None:
 
     try:
         while True:
+            # To connect to a server:
+            # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+            # sock.connect(("127.0.0.1", 5000))
             client_socket, (client_address, _) = server_socket.accept()
             client_message_bytes = client_socket.recv(4096)
             client_message = client_message_bytes.decode()

@@ -42,6 +42,9 @@ function main() {
         port_number = parseInt(process.argv[2]) & 65535;
     }
 
+    // To connect to a server:
+    // let client = createConnection(5000, "127.0.0.1", () => {});
+
     let server = createServer((socket: Socket) => {
         socket.on("data", (client_message_bytes: Buffer) => {
             let client_message = client_message_bytes.toString();
