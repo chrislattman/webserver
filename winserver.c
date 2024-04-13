@@ -17,6 +17,9 @@
 
 static const unsigned short PORT_NUMBER = 8080;
 static SOCKET server_socket;
+static HANDLE mutex;
+static unsigned long long counter = 0;
+
 static char error_message[1024];
 
 typedef struct sock_info {
@@ -58,6 +61,12 @@ static DWORD WINAPI client_handler(LPVOID arg)
     struct in_addr client_address;
     time_t curr_time;
     struct tm *time_info;
+
+    // critical section
+    WaitForSingleObject(mutex, INFINITE);
+    ++counter;
+    printf("Handling request #%llu\n", counter);
+    ReleaseMutex(mutex);
 
     socket_info = (sock_info *) arg;
     client_socket = socket_info->client_socket;
@@ -134,8 +143,14 @@ int main(int argc, char *argv[])
         port_number = (unsigned short) atoi(argv[1]);
     }
 
+    mutex = CreateMutexA(NULL, FALSE, NULL);
+    if (mutex == NULL) {
+        fprintf(stderr, "CreateMutexA: %s\n", StrGetLastError(GetLastError()));
+        exit(0);
+    }
+
     if ((err = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
-        fprintf(stderr, "WSAStartup error: %d\n", err);
+        fprintf(stderr, "WSAStartup: %s\n", StrGetLastError(err));
         exit(0);
     }
 
