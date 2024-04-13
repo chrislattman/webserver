@@ -2,13 +2,15 @@ import signal
 import socket
 import sys
 import time
-from threading import Thread
+from threading import Lock, Thread
 from traceback import print_exception
 from typing_extensions import override
 
 INT_MAX = 2147483647
 PORT_NUMBER = 8080
 server_socket: socket.socket
+mutex: Lock
+counter = 0
 
 
 class ClientHandler(Thread):
@@ -38,6 +40,14 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
         client_socket_arg (socket.socket): client socket
         client_address_arg (str): client host address
     """
+
+    # critical section
+    global mutex, counter
+    mutex.acquire()
+    counter += 1
+    print("Handling request #" + str(counter))
+    mutex.release()
+
     server_message = "HTTP/1.1 200 OK\n"
     format_string = "Date: %a, %d %b %Y %X GMT\n"
     server_message += time.strftime(format_string, time.gmtime())
@@ -68,10 +78,13 @@ def signal_handler(signum, frame) -> None:
 def main() -> None:
     """Main server loop for the web server."""
     threads = []
-    port_number = 0
 
+    port_number = 0
     if len(sys.argv) == 2:
         port_number = int(sys.argv[1]) & 65535
+
+    global mutex
+    mutex = Lock()
 
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)

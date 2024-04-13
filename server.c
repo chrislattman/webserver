@@ -15,6 +15,8 @@
 
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
+static pthread_mutex_t mutex;
+static unsigned long long counter = 0;
 
 typedef struct sock_info {
     int             client_socket;
@@ -35,6 +37,12 @@ static void *client_handler(void *arg)
     struct in_addr client_address;
     time_t curr_time;
     struct tm *time_info;
+
+    // critical section
+    pthread_mutex_lock(&mutex);
+    ++counter;
+    printf("Handling request #%llu\n", counter);
+    pthread_mutex_unlock(&mutex);
 
     socket_info = (sock_info *) arg;
     client_socket = socket_info->client_socket;
@@ -105,6 +113,11 @@ int main(int argc, char *argv[])
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
+    }
+
+    if (pthread_mutex_init(&mutex, NULL) != 0) {
+        fprintf(stderr, "pthread_mutex_init: %s\n", strerror(errno));
+        exit(0);
     }
 
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {

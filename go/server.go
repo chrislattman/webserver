@@ -7,16 +7,27 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
 
 const PORT_NUMBER int = 8080
-
 var ln net.Listener
+// var channel chan bool
+var mutex sync.Mutex
+var counter uint64 = 0
 
 // Handles client connections.
 func handleConnection(conn net.Conn) {
+	// critical section
+	// <-channel // using a channel
+	mutex.Lock() // using a mutex
+	counter++
+	fmt.Printf("Handling request #%v\n", counter)
+	mutex.Unlock()
+	// channel <- true
+
 	full_address := conn.RemoteAddr().String()
 	full_address = strings.ReplaceAll(full_address, "[", "")
 	full_address = strings.ReplaceAll(full_address, "]", "")
@@ -58,14 +69,17 @@ func signalHandler() {
 
 // Main server loop for the web server.
 func main() {
+	var err error
+
 	var port_number = 0
 	if len(os.Args) == 2 {
 		port_number, _ = strconv.Atoi(os.Args[1])
 		port_number &= 65535
 	}
 
+	// channel = make(chan bool, 1)
+	// channel <- true
 	signal_channel := make(chan os.Signal, 1)
-	var err error
 
 	// No default way of setting SO_REUSEADDR
 	if port_number >= 10000 {

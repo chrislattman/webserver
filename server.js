@@ -5,6 +5,7 @@ const net = require("node:net");
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
+var counter = 0;
 
 /**
  * Prints out error if it isn't undefined.
@@ -44,6 +45,10 @@ function main() {
 
     // let server = createServer((socket) => {
     let server = net.createServer((socket) => {
+        // "critical section"
+        ++counter;
+        console.log("Handling request #" + counter);
+
         socket.on("data", (client_message_bytes) => {
             let client_message = client_message_bytes.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\n"));

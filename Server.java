@@ -1,12 +1,13 @@
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 // import java.io.BufferedInputStream;
-// import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+// import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -16,6 +17,9 @@ import java.util.TimeZone;
 public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
+    private static ReentrantLock mutex;
+    private static int counter = 0;
+
     private static Socket clientSocket;
     // private static byte[] clientMessageBytes;
     // private static BufferedInputStream in;
@@ -47,6 +51,12 @@ public class Server {
          * Called by the start() function asynchronously.
          */
         public void run() {
+            // critical section
+            mutex.lock();
+            ++counter;
+            System.out.println("Handling request #" + counter);
+            mutex.unlock();
+
             try {
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
 
@@ -86,10 +96,11 @@ public class Server {
      */
     public static void main(String[] args) {
         int port_number = 0;
-
         if (args.length == 1) {
             port_number = Integer.parseInt(args[0]) & 65535;
         }
+
+        mutex = new ReentrantLock();
 
         try {
             if (port_number >= 10000) {

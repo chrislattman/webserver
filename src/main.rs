@@ -1,18 +1,23 @@
 use std::{
-    env,
-    io::{BufRead, BufReader, Write},
+    env, io::{BufRead, BufReader, Write}, net::{Shutdown, TcpListener, TcpStream}, sync::Mutex, thread,
     // io::Read,
-    net::{Shutdown, TcpListener, TcpStream},
-    thread,
     // str,
 };
 
 use chrono::Utc;
 
 const PORT_NUMBER: u16 = 8080;
+static MUTEX: Mutex<i32> = Mutex::new(0);
 
 /// Thread that handles each client connection.
 fn client_handler(mut stream: TcpStream) {
+    // critical section
+    {
+        let mut counter = MUTEX.lock().unwrap();
+        *counter += 1;
+        println!("Handling request #{}", *counter);
+    }
+
     let mut server_message = "HTTP/1.1 200 OK\n".to_string();
     let date = Utc::now().to_rfc2822().replace(" +0000", "");
     server_message += &format!("Date: {} GMT\n", date);
@@ -34,7 +39,6 @@ fn client_handler(mut stream: TcpStream) {
 /// Main server loop for the web server.
 fn main() {
     let mut port_number: u16 = 0;
-
     let args: Vec<String> = env::args().collect();
     if args.len() == 2 {
         let args1 = &args[1];

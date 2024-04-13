@@ -8,6 +8,7 @@ import { Buffer } from "node:buffer";
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
+var counter = 0;
 
 /**
  * Prints out error if it isn't undefined.
@@ -46,6 +47,10 @@ function main() {
     // let client = createConnection(5000, "127.0.0.1", () => {});
 
     let server = createServer((socket: Socket) => {
+        // "critical section"
+        ++counter;
+        console.log("Handling request #" + counter);
+
         socket.on("data", (client_message_bytes: Buffer) => {
             let client_message = client_message_bytes.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\n"));
