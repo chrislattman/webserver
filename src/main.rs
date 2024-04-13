@@ -7,7 +7,7 @@ use std::{
 use chrono::Utc;
 
 const PORT_NUMBER: u16 = 8080;
-static MUTEX: Mutex<i32> = Mutex::new(0);
+static MUTEX: Mutex<u64> = Mutex::new(0);
 
 /// Thread that handles each client connection.
 fn client_handler(mut stream: TcpStream) {

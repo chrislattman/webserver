@@ -18,7 +18,7 @@ public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static ReentrantLock mutex;
-    private static int counter = 0;
+    private static long counter = 0;
 
     private static Socket clientSocket;
     // private static byte[] clientMessageBytes;
