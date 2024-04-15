@@ -17,7 +17,7 @@
 
 static const unsigned short PORT_NUMBER = 8080;
 static SOCKET server_socket;
-static HANDLE mutex;
+static HANDLE mutex, binary_semaphore;
 static unsigned long long counter = 0;
 
 static char error_message[1024];
@@ -63,9 +63,11 @@ static DWORD WINAPI client_handler(LPVOID arg)
     struct tm *time_info;
 
     // critical section
-    WaitForSingleObject(mutex, INFINITE);
+    WaitForSingleObject(mutex, INFINITE); // using a mutex
+    // WaitForSingleObject(binary_semaphore, INFINITE); // using a binary semaphore
     ++counter;
     printf("Handling request #%llu\n", counter);
+    // ReleaseSemaphore(binary_semaphore, 1, NULL);
     ReleaseMutex(mutex);
 
     socket_info = (sock_info *) arg;
@@ -146,6 +148,12 @@ int main(int argc, char *argv[])
     mutex = CreateMutexA(NULL, FALSE, NULL);
     if (mutex == NULL) {
         fprintf(stderr, "CreateMutexA: %s\n", StrGetLastError(GetLastError()));
+        exit(0);
+    }
+
+    binary_semaphore = CreateSemaphoreA(NULL, 1, 1, NULL);
+    if (binary_semaphore == NULL) {
+        fprintf(stderr, "CreateSemaphoreA: %s\n", StrGetLastError(GetLastError()));
         exit(0);
     }
 
