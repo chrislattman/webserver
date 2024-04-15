@@ -2,7 +2,7 @@ import signal
 import socket
 import sys
 import time
-from threading import Lock, Thread
+from threading import Lock, Semaphore, Thread
 from traceback import print_exception
 from typing_extensions import override
 
@@ -10,6 +10,7 @@ INT_MAX = 2147483647
 PORT_NUMBER = 8080
 server_socket: socket.socket
 mutex: Lock
+binary_semaphore: Semaphore
 counter = 0
 
 
@@ -42,10 +43,12 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
     """
 
     # critical section
-    global mutex, counter
-    mutex.acquire()
+    global mutex, binary_semaphore, counter
+    mutex.acquire() # using a mutex
+    # binary_semaphore.acquire() # using a binary semaphore
     counter += 1
     print("Handling request #" + str(counter))
+    # binary_semaphore.release()
     mutex.release()
 
     server_message = "HTTP/1.1 200 OK\n"
@@ -83,8 +86,9 @@ def main() -> None:
     if len(sys.argv) == 2:
         port_number = int(sys.argv[1]) & 65535
 
-    global mutex
+    global mutex, binary_semaphore
     mutex = Lock()
+    binary_semaphore = Semaphore(1)
 
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)

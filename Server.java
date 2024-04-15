@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 // import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.Date;
 import java.util.TimeZone;
@@ -18,6 +19,7 @@ public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static ReentrantLock mutex;
+    private static Semaphore binarySemaphore;
     private static long counter = 0;
 
     private static Socket clientSocket;
@@ -52,9 +54,11 @@ public class Server {
          */
         public void run() {
             // critical section
-            mutex.lock();
+            mutex.lock(); // using a mutex
+            // binarySemaphore.acquireUninterruptibly(); // using a binary semaphore
             ++counter;
             System.out.println("Handling request #" + counter);
+            // binarySemaphore.release();
             mutex.unlock();
 
             try {
@@ -101,6 +105,7 @@ public class Server {
         }
 
         mutex = new ReentrantLock();
+        binarySemaphore = new Semaphore(1);
 
         try {
             if (port_number >= 10000) {

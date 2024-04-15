@@ -12,10 +12,12 @@
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
+#include <semaphore.h>
 
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
 static pthread_mutex_t mutex;
+static sem_t binary_semaphore; // Supported on Linux only, for macOS use Grand Central Dispatch
 static unsigned long long counter = 0;
 
 typedef struct sock_info {
@@ -39,9 +41,11 @@ static void *client_handler(void *arg)
     struct tm *time_info;
 
     // critical section
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&mutex); // using a mutex
+    // sem_wait(&binary_semaphore); // using a binary semaphore
     ++counter;
     printf("Handling request #%llu\n", counter);
+    // sem_post(&binary_semaphore);
     pthread_mutex_unlock(&mutex);
 
     socket_info = (sock_info *) arg;
@@ -117,6 +121,11 @@ int main(int argc, char *argv[])
 
     if (pthread_mutex_init(&mutex, NULL) != 0) {
         fprintf(stderr, "pthread_mutex_init: %s\n", strerror(errno));
+        exit(0);
+    }
+
+    if (sem_init(&binary_semaphore, 0, 1) < 0) {
+        fprintf(stderr, "sem_init: %s\n", strerror(errno));
         exit(0);
     }
 

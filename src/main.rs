@@ -8,6 +8,8 @@ use chrono::Utc;
 
 const PORT_NUMBER: u16 = 8080;
 static MUTEX: Mutex<u64> = Mutex::new(0);
+// Rust std deprecated Semaphore since v1.7.0: https://doc.rust-lang.org/1.7.0/std/sync/struct.Semaphore.html
+// Check out tokio: https://docs.rs/tokio/latest/tokio/sync/struct.Semaphore.html
 
 /// Thread that handles each client connection.
 fn client_handler(mut stream: TcpStream) {

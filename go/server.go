@@ -14,19 +14,19 @@ import (
 
 const PORT_NUMBER int = 8080
 var ln net.Listener
-// var channel chan bool
 var mutex sync.Mutex
+// var channel chan bool
 var counter uint64 = 0
 
 // Handles client connections.
 func handleConnection(conn net.Conn) {
 	// critical section
-	// <-channel // using a channel
 	mutex.Lock() // using a mutex
+	// <-channel // using a channel
 	counter++
 	fmt.Printf("Handling request #%v\n", counter)
-	mutex.Unlock()
 	// channel <- true
+	mutex.Unlock()
 
 	full_address := conn.RemoteAddr().String()
 	full_address = strings.ReplaceAll(full_address, "[", "")
@@ -77,7 +77,7 @@ func main() {
 		port_number &= 65535
 	}
 
-	// channel = make(chan bool, 1)
+	// channel = make(chan bool, 1) // creating a channel to work like a binary semaphore
 	// channel <- true
 	signal_channel := make(chan os.Signal, 1)
 
