@@ -132,8 +132,9 @@ int main(int argc, char *argv[])
         exit(0);
     default:
         close(fildes[1]);
-        read(fildes[0], date, sizeof(date));
+        read(fildes[0], date, sizeof(date) - 1);
         printf("Current time: %s", date);
+        close(fildes[0]);
         wait(NULL);
     }
 

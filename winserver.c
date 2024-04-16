@@ -129,17 +129,44 @@ static void signal_handler(int signum)
  */
 int main(int argc, char *argv[])
 {
+    SECURITY_ATTRIBUTES sa;
+    STARTUPINFO si = {0};
+    PROCESS_INFORMATION pi = {0};
     unsigned short port_number = 0;
     WSADATA wsaData;
     SOCKET client_socket;
     int err, thread_index;
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
-    HANDLE thread_handle[60], new_thread;
+    HANDLE fildes[2], thread_handle[60], new_thread;
     DWORD thread_id[60];
     sock_info socket_info;
-    char client_message[4096], *headers_begin, *request_line;
+    char date[30], client_message[4096], *headers_begin, *request_line;
     long request_line_length;
+
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+    if (!CreatePipe(&fildes[0], &fildes[1], &sa, 0)) {
+        fprintf(stderr, "CreatePipe: %s\n", StrGetLastError(GetLastError()));
+        exit(0);
+    }
+    SetHandleInformation(fildes[0], HANDLE_FLAG_INHERIT, 0);
+
+    si.cb = sizeof(STARTUPINFO);
+    si.hStdOutput = fildes[1];
+    si.dwFlags |= STARTF_USESTDHANDLES;
+    if (!CreateProcessA(NULL, "date", NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+        fprintf(stderr, "CreateProcessA: %s\n", StrGetLastError(GetLastError()));
+        exit(0);
+    }
+    CloseHandle(fildes[1]);
+    ReadFile(fildes[0], date, sizeof(date) - 1, NULL, NULL);
+    printf("Current time: %s\n", date);
+    CloseHandle(fildes[0]);
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
