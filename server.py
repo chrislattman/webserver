@@ -5,6 +5,7 @@ import time
 from threading import Lock, Semaphore, Thread
 from traceback import print_exception
 from typing_extensions import override
+import subprocess
 
 INT_MAX = 2147483647
 PORT_NUMBER = 8080
@@ -81,6 +82,9 @@ def signal_handler(signum, frame) -> None:
 def main() -> None:
     """Main server loop for the web server."""
     threads = []
+
+    date = subprocess.run(["date"], capture_output=True)
+    print("Current time: " + date.stdout.decode(), end="")
 
     port_number = 0
     if len(sys.argv) == 2:

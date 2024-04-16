@@ -5,6 +5,7 @@
  */
 import { Server, Socket, createServer } from "node:net";
 import { Buffer } from "node:buffer";
+import { spawnSync } from "node:child_process";
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
@@ -37,6 +38,9 @@ function signal_handler(server: Server) {
  * Main server loop for the web server.
  */
 function main() {
+    let date = spawnSync("date");
+    process.stdout.write(`Current time: ${date.stdout}`);
+
     let port_number = 0;
 
     if (process.argv.length == 3) {

@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 // import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -87,7 +88,7 @@ public class Server {
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
                 this.clientSocket.close();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -102,6 +103,17 @@ public class Server {
         int port_number = 0;
         if (args.length == 1) {
             port_number = Integer.parseInt(args[0]) & 65535;
+        }
+
+        String[] cmd = {"date"};
+        try {
+            Process process = Runtime.getRuntime().exec(cmd);
+            BufferedReader output = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            System.out.println("Current time: " + output.readLine());
+            output.close();
+            process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
 
         mutex = new ReentrantLock();
@@ -141,11 +153,11 @@ public class Server {
                     threadIndex = 0;
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             try {
                 serverSocket.close();
-            } catch (Exception exc) {
+            } catch (IOException exc) {
                 exc.printStackTrace();
             }
         }

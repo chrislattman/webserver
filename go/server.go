@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
@@ -70,6 +71,12 @@ func signalHandler() {
 // Main server loop for the web server.
 func main() {
 	var err error
+
+	date, err := exec.Command("date").Output()
+	if err != nil {
+		fmt.Println("exec.Cmd.Output:", err)
+	}
+	fmt.Printf("Current time: %s", string(date))
 
 	var port_number = 0
 	if len(os.Args) == 2 {

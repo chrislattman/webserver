@@ -1,7 +1,6 @@
 use std::{
-    env, io::{BufRead, BufReader, Write}, net::{Shutdown, TcpListener, TcpStream}, sync::Mutex, thread,
+    env, io::{BufRead, BufReader, Write}, net::{Shutdown, TcpListener, TcpStream}, process::Command, sync::Mutex, thread, str
     // io::Read,
-    // str,
 };
 
 use chrono::Utc;
@@ -40,6 +39,10 @@ fn client_handler(mut stream: TcpStream) {
 
 /// Main server loop for the web server.
 fn main() {
+    let output = Command::new("date").output().unwrap().stdout;
+    let date = str::from_utf8(&output).unwrap();
+    print!("Current time: {}", date);
+
     let mut port_number: u16 = 0;
     let args: Vec<String> = env::args().collect();
     if args.len() == 2 {

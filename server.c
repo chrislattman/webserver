@@ -12,12 +12,13 @@
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
-#include <semaphore.h>
+// #include <semaphore.h>
+#include <sys/wait.h>
 
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
 static pthread_mutex_t mutex;
-static sem_t binary_semaphore; // Supported on Linux only, for macOS use Grand Central Dispatch
+// static sem_t binary_semaphore; // Supported on Linux only, for macOS use Grand Central Dispatch
 static unsigned long long counter = 0;
 
 typedef struct sock_info {
@@ -107,13 +108,34 @@ static void signal_handler(__attribute__((unused)) int signum)
 int main(int argc, char *argv[])
 {
     unsigned short port_number = 0;
-    int client_socket, thread_index, reuseaddr = 1;
+    int client_socket, thread_index, reuseaddr = 1, fildes[2];
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
     sock_info socket_info;
-    char client_message[4096], *headers_begin, *request_line;
+    char date[30], client_message[4096], *headers_begin, *request_line;
     long request_line_length;
+
+    if (pipe(fildes) < 0) {
+        fprintf(stderr, "pipe: %s\n", strerror(errno));
+        exit(0);
+    }
+
+    switch (fork()) {
+    case -1:
+        fprintf(stderr, "fork: %s\n", strerror(errno));
+        exit(0);
+    case 0:
+        close(fildes[0]);
+        dup2(fildes[1], STDOUT_FILENO);
+        execlp("date", "", NULL);
+        exit(0);
+    default:
+        close(fildes[1]);
+        read(fildes[0], date, sizeof(date));
+        printf("Current time: %s", date);
+        wait(NULL);
+    }
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
@@ -124,10 +146,10 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    if (sem_init(&binary_semaphore, 0, 1) < 0) {
-        fprintf(stderr, "sem_init: %s\n", strerror(errno));
-        exit(0);
-    }
+    // if (sem_init(&binary_semaphore, 0, 1) < 0) {
+    //     fprintf(stderr, "sem_init: %s\n", strerror(errno));
+    //     exit(0);
+    // }
 
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket: %s\n", strerror(errno));
