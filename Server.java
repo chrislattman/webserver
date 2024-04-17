@@ -122,10 +122,10 @@ public class Server {
         try {
             if (port_number >= 10000) {
                 serverSocket = new ServerSocket(port_number, Integer.MAX_VALUE,
-                    InetAddress.getLoopbackAddress()); // InetAddress.getByName("::1") for IPv6
+                    InetAddress.getLoopbackAddress()); // InetAddress.getByName("127.0.0.1") or InetAddress.getByName("::1") for IPv6
             } else {
                 serverSocket = new ServerSocket(PORT_NUMBER, Integer.MAX_VALUE,
-                    InetAddress.getLoopbackAddress()); // InetAddress.getByName("::1") for IPv6
+                    InetAddress.getLoopbackAddress()); // InetAddress.getByName("127.0.0.1") or InetAddress.getByName("::1") for IPv6
             }
             serverSocket.setReuseAddress(true);
             threads = new ClientHandler[60];
