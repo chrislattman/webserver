@@ -90,8 +90,10 @@ func main() {
 
 	// No default way of setting SO_REUSEADDR
 	if port_number >= 10000 {
+		// "[::1]:" for IPv6
 		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(port_number))
 	} else {
+		// "[::1]:" for IPv6
 		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(PORT_NUMBER))
 	}
 	if err != nil {

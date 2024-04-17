@@ -78,12 +78,12 @@ function main() {
     });
     if (port_number >= 10000) {
         // SO_REUSEADDR is set by default
-        server.listen(port_number, "127.0.0.1", INT_MAX, () => {
+        server.listen(port_number, "127.0.0.1", INT_MAX, () => { // "::1" for IPv6
             signal_handler(server);
         });
     } else {
         // SO_REUSEADDR is set by default
-        server.listen(PORT_NUMBER, "127.0.0.1", INT_MAX, () => {
+        server.listen(PORT_NUMBER, "127.0.0.1", INT_MAX, () => { // "::1" for IPv6
             signal_handler(server);
         });
     }

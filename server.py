@@ -94,17 +94,23 @@ def main() -> None:
     mutex = Lock()
     binary_semaphore = Semaphore(1)
 
+    # To support IPv6 as well, one could create an AF_INET6 socket and use the
+    # first list in the tuple returned by select.select() to poll desired
+    # file descriptors (our sockets) to see which sockets are currently
+    # readable. import select
+    #
+    # This happens synchronously, so maybe 2 separate threads are desired.
     global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    signal.signal(signal.SIGINT, signal_handler)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4, "big"))
+    localhost = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4, "big")) # "127.0.0.1" or "::1" for IPv6
     if port_number >= 10000:
         server_address = (localhost, port_number)
     else:
         server_address = (localhost, PORT_NUMBER)
     server_socket.bind(server_address)
-    signal.signal(signal.SIGINT, signal_handler)
     # signal.signal(signal.SIGINT, lambda signum, frame: signal_handler) # For signal_handler with no arguments
 
     server_socket.listen(INT_MAX)
@@ -114,6 +120,7 @@ def main() -> None:
             # To connect to a server:
             # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
             # sock.connect(("127.0.0.1", 5000))
+            # For IPv6, use (client_address, _, _, _) instead
             client_socket, (client_address, _) = server_socket.accept()
             client_message_bytes = client_socket.recv(4096)
             client_message = client_message_bytes.decode()

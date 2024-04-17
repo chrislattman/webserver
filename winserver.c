@@ -189,10 +189,17 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+    // To support IPv6 as well, you could create an AF_INET6 socket and
+    // initially use FD_ZERO() and FD_SET(), and then select() and FD_ISSET()
+    // to poll desired file descriptors (our sockets) to see which sockets are
+    // currently readable.
+    //
+    // This happens synchronously, so maybe 2 separate threads are desired.
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
         fprintf(stderr, "socket: %s\n", StrGetLastError(WSAGetLastError()));
         exit(0);
     }
+    signal(SIGINT, signal_handler);
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, "1", sizeof(char *)) < 0) {
         fprintf(stderr, "setsockopt: %s\n", strerror(errno));
         goto cleanup;
@@ -204,13 +211,13 @@ int main(int argc, char *argv[])
     } else {
         server_connection.sin_port = htons(PORT_NUMBER);
     }
+    // inet_pton(AF_INET6, "::1", &server_connection.sin6_addr.s6_addr) for IPv6
     server_connection.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     if (bind(server_socket, (struct sockaddr *) &server_connection,
             (socklen_t) sizeof(server_connection)) < 0) {
         fprintf(stderr, "bind: %s\n", StrGetLastError(WSAGetLastError()));
         goto cleanup;
     }
-    signal(SIGINT, signal_handler);
 
     if (listen(server_socket, INT_MAX) < 0) {
         fprintf(stderr, "listen: %s\n", StrGetLastError(WSAGetLastError()));
@@ -250,6 +257,7 @@ int main(int argc, char *argv[])
         printf("%s\n", request_line);
         free(request_line);
 
+        // would need to deep copy sin6_addr to client_address for IPv6
         socket_info = (sock_info) {
             .client_socket = client_socket,
             .client_address = client_connection.sin_addr,

@@ -1,5 +1,5 @@
 use std::{
-    env, io::{BufRead, BufReader, Write}, net::{Shutdown, TcpListener, TcpStream}, process::Command, sync::Mutex, thread, str
+    env, io::{BufRead, BufReader, Write}, net::{Shutdown, TcpListener, TcpStream}, process::Command, str, sync::Mutex, thread
     // io::Read,
 };
 
@@ -54,9 +54,11 @@ fn main() {
     // let sock = TcpStream::connect("127.0.0.1:5000").unwrap();
     let listener = if port_number >= 10000 {
         // No default way of setting SO_REUSEADDR
+        // "[::1]:" for IPv6
         TcpListener::bind("127.0.0.1:".to_owned() + &port_number.to_string()).unwrap()
     } else {
         // No default way of setting SO_REUSEADDR
+        // "[::1]:" for IPv6
         TcpListener::bind("127.0.0.1:".to_owned() + &PORT_NUMBER.to_string()).unwrap()
     };
 
