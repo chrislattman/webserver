@@ -14,8 +14,10 @@ import (
 )
 
 const PORT_NUMBER int = 8080
+
 var ln net.Listener
 var mutex sync.Mutex
+
 // var channel chan bool
 var counter uint64 = 0
 
