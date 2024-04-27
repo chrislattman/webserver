@@ -1,4 +1,4 @@
-#define _GNU_SOURCE // needed for getaddrinfo
+#define _GNU_SOURCE // needed for addrinfo-related symbols
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -117,6 +117,11 @@ int main(int argc, char *argv[])
     char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
     long request_line_length;
     struct addrinfo *ipaddrs, *res, hints = {0};
+
+    // FILE *fp = popen("date", "r");
+    // fgets(date, sizeof(date), fp);
+    // pclose(fp);
+    // printf("Current time: %s\n", date);
 
     if (pipe(fildes) < 0) {
         fprintf(stderr, "pipe: %s\n", strerror(errno));
