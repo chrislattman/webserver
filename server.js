@@ -1,6 +1,6 @@
 "use strict";
 
-// import { createServer } from "node:net"; // Needs .mjs file extension or package.json file with "type": "module"
+const dns = require("node:dns");
 const net = require("node:net");
 const child_process = require("node:child_process");
 
@@ -38,8 +38,14 @@ function main() {
     let date = child_process.spawnSync("date");
     process.stdout.write(`Current time: ${date.stdout}`);
 
-    let port_number = 0;
+    dns.lookup("www.google.com", {family: 4, all: true}, (err, ipaddrs) => {
+        console.log("IPv4 addresses associated with www.google.com:");
+        ipaddrs.forEach((res) => {
+            console.log(res.address);
+        });
+    });
 
+    let port_number = 0;
     if (process.argv.length == 3) {
         port_number = parseInt(process.argv[2]) & 65535;
     }

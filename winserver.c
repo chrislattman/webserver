@@ -85,7 +85,7 @@ static DWORD WINAPI client_handler(LPVOID arg)
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
-    strncat(content, inet_ntoa(client_address), 15);
+    inet_ntop(AF_INET, &client_address, content + strlen(content), INET_ADDRSTRLEN);
     strcat(content, "\n");
 
     sprintf(content_length, "Content-Length: %zu\n", strlen(content));
@@ -141,8 +141,9 @@ int main(int argc, char *argv[])
     HANDLE fildes[2], thread_handle[60], new_thread;
     DWORD thread_id[60];
     sock_info socket_info;
-    char date[30], client_message[4096], *headers_begin, *request_line;
+    char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
     long request_line_length;
+    struct addrinfo *ipaddrs, *res, hints = {0};
 
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.bInheritHandle = TRUE;
@@ -167,6 +168,20 @@ int main(int argc, char *argv[])
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP; // can be 0 since TCP is implied by SOCK_STREAM
+    if ((err = getaddrinfo("www.google.com", NULL, &hints, &ipaddrs)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(err));
+    }
+    printf("IPv4 addresses associated with www.google.com:\n");
+    for (res = ipaddrs; res != NULL; res = res->ai_next) {
+        inet_ntop(res->ai_family, &((struct sockaddr_in *)res->ai_addr)->sin_addr, addr, sizeof(addr));
+        printf("%s\n", addr);
+    }
+    freeaddrinfo(ipaddrs);
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);

@@ -86,6 +86,15 @@ def main() -> None:
     date = subprocess.run(["date"], capture_output=True)
     print("Current time: " + date.stdout.decode(), end="")
 
+    ipaddrs = socket.getaddrinfo("www.google.com",
+                                 None,
+                                 family=socket.AF_INET,
+                                 type=socket.SOCK_STREAM,
+                                 proto=socket.IPPROTO_TCP)
+    print("IPv4 addresses associated with www.google.com:")
+    for res in ipaddrs:
+        print(res[4][0])
+
     port_number = 0
     if len(sys.argv) == 2:
         port_number = int(sys.argv[1]) & 65535

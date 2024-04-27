@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
-// #include <semaphore.h>
+#include <semaphore.h>
 #include <sys/wait.h>
 
 static const unsigned short PORT_NUMBER = 8080;
@@ -64,7 +64,7 @@ static void *client_handler(void *arg)
     strcat(server_message, "Accept-Ranges: bytes\n");
 
     strcpy(content, "What's up? Your IP address is ");
-    strncat(content, inet_ntoa(client_address), 15);
+    inet_ntop(AF_INET, &client_address, content + strlen(content), INET_ADDRSTRLEN);
     strcat(content, "\n");
 
     sprintf(content_length, "Content-Length: %zu\n", strlen(content));
@@ -108,13 +108,14 @@ static void signal_handler(__attribute__((unused)) int signum)
 int main(int argc, char *argv[])
 {
     unsigned short port_number = 0;
-    int client_socket, thread_index, reuseaddr = 1, fildes[2];
+    int err, client_socket, thread_index, reuseaddr = 1, fildes[2];
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
     sock_info socket_info;
-    char date[30], client_message[4096], *headers_begin, *request_line;
+    char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
     long request_line_length;
+    struct addrinfo *ipaddrs, *res, hints = {0};
 
     if (pipe(fildes) < 0) {
         fprintf(stderr, "pipe: %s\n", strerror(errno));
@@ -138,12 +139,26 @@ int main(int argc, char *argv[])
         wait(NULL);
     }
 
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP; // can be 0 since TCP is implied by SOCK_STREAM
+    if ((err = getaddrinfo("www.google.com", NULL, &hints, &ipaddrs)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(err));
+    }
+    printf("IPv4 addresses associated with www.google.com:\n");
+    for (res = ipaddrs; res != NULL; res = res->ai_next) {
+        inet_ntop(res->ai_family, &((struct sockaddr_in *)res->ai_addr)->sin_addr, addr, sizeof(addr));
+        printf("%s\n", addr);
+    }
+    freeaddrinfo(ipaddrs);
+
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
     }
 
-    if (pthread_mutex_init(&mutex, NULL) != 0) {
-        fprintf(stderr, "pthread_mutex_init: %s\n", strerror(errno));
+    if ((err = pthread_mutex_init(&mutex, NULL)) != 0) {
+        fprintf(stderr, "pthread_mutex_init: %s\n", strerror(err));
         exit(0);
     }
 
@@ -225,17 +240,17 @@ int main(int argc, char *argv[])
             .client_socket = client_socket,
             .client_address = client_connection.sin_addr,
         };
-        if (pthread_create(&thread_id[thread_index++], NULL, client_handler,
-                &socket_info) != 0) {
-            fprintf(stderr, "pthread_create: %s\n", strerror(errno));
+        if ((err = pthread_create(&thread_id[thread_index++], NULL, client_handler,
+                &socket_info)) != 0) {
+            fprintf(stderr, "pthread_create: %s\n", strerror(err));
             goto cleanup;
         }
 
         if (thread_index >= 50) {
             thread_index = 0;
             while (thread_index < 50) {
-                if (pthread_join(thread_id[thread_index++], NULL) != 0) {
-                    fprintf(stderr, "pthread_join: %s\n", strerror(errno));
+                if ((err = pthread_join(thread_id[thread_index++], NULL)) != 0) {
+                    fprintf(stderr, "pthread_join: %s\n", strerror(err));
                     goto cleanup;
                 }
             }

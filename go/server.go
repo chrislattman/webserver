@@ -80,6 +80,17 @@ func main() {
 	}
 	fmt.Printf("Current time: %s", string(date))
 
+	ipaddrs, err := net.LookupHost("www.google.com")
+	if err != nil {
+		fmt.Println("net.LookupHost:", err)
+	}
+	fmt.Println("IPv4 addresses associated with www.google.com:")
+	for _, res := range ipaddrs {
+		if len(res) < 16 {
+			fmt.Println(res)
+		}
+	}
+
 	var port_number = 0
 	if len(os.Args) == 2 {
 		port_number, _ = strconv.Atoi(os.Args[1])

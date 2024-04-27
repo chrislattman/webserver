@@ -3,6 +3,7 @@
  * $ npm i -D typescript @types/node
  * $ npx tsc --strict server-typescript.ts
  */
+import { lookup } from "node:dns";
 import { Server, Socket, createServer } from "node:net";
 import { Buffer } from "node:buffer";
 import { spawnSync } from "node:child_process";
@@ -41,8 +42,14 @@ function main() {
     let date = spawnSync("date");
     process.stdout.write(`Current time: ${date.stdout}`);
 
-    let port_number = 0;
+    lookup("www.google.com", {family: 4, all: true}, (err, ipaddrs) => {
+        console.log("IPv4 addresses associated with www.google.com:");
+        ipaddrs.forEach((res) => {
+            console.log(res.address);
+        });
+    });
 
+    let port_number = 0;
     if (process.argv.length == 3) {
         port_number = parseInt(process.argv[2]) & 65535;
     }

@@ -1,11 +1,11 @@
 use std::{
-    env,
+    env::args,
     io::{BufRead, BufReader, Write},
-    net::{Shutdown, TcpListener, TcpStream},
+    net::{Shutdown, TcpListener, TcpStream, ToSocketAddrs},
     process::Command,
-    str,
+    str::from_utf8,
     sync::Mutex,
-    thread, // io::Read,
+    thread::spawn, // io::Read,
 };
 
 use chrono::Utc;
@@ -46,11 +46,17 @@ fn client_handler(mut stream: TcpStream) {
 /// Main server loop for the web server.
 fn main() {
     let output = Command::new("date").output().unwrap().stdout;
-    let date = str::from_utf8(&output).unwrap();
+    let date = from_utf8(&output).unwrap();
     print!("Current time: {}", date);
 
+    let ipaddrs = "www.google.com:443".to_socket_addrs().unwrap();
+    println!("IPv4 addresses associated with www.google.com:");
+    for res in ipaddrs {
+        println!("{}", res.to_string().replace(":443", ""));
+    }
+
     let mut port_number: u16 = 0;
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = args().collect();
     if args.len() == 2 {
         let args1 = &args[1];
         port_number = args1.parse().unwrap();
@@ -72,13 +78,13 @@ fn main() {
         // let mut stream = incoming_stream.unwrap();
         // let mut client_message_bytes = [0u8; 4096];
         // stream.read(&mut client_message_bytes).unwrap();
-        // let client_message = str::from_utf8(&client_message_bytes).unwrap();
+        // let client_message = from_utf8(&client_message_bytes).unwrap();
         // let (request_line, _) = client_message.split_once("\n").unwrap();
         let stream = incoming_stream.unwrap();
         let buf_reader = BufReader::new(&stream);
         let request_line = buf_reader.lines().next().unwrap().unwrap();
         println!("{}", request_line);
-        thread::spawn(|| {
+        spawn(|| {
             client_handler(stream);
         });
     }

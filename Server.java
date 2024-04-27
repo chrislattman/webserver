@@ -3,9 +3,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 // import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.Semaphore;
@@ -100,11 +102,6 @@ public class Server {
      * @param args unused
      */
     public static void main(String[] args) {
-        int port_number = 0;
-        if (args.length == 1) {
-            port_number = Integer.parseInt(args[0]) & 65535;
-        }
-
         String[] cmd = {"date"};
         try {
             Process process = Runtime.getRuntime().exec(cmd);
@@ -114,6 +111,23 @@ public class Server {
             process.waitFor();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+        }
+
+        try {
+            InetAddress[] ipaddrs = InetAddress.getAllByName("www.google.com");
+            System.out.println("IPv4 addresses associated with www.google.com:");
+            for (InetAddress res : ipaddrs) {
+                if (res instanceof Inet4Address) {
+                    System.out.println(res.getHostAddress());
+                }
+            }
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        int port_number = 0;
+        if (args.length == 1) {
+            port_number = Integer.parseInt(args[0]) & 65535;
         }
 
         mutex = new ReentrantLock();
