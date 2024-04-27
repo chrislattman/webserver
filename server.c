@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // needed for getaddrinfo
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
