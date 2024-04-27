@@ -169,6 +169,11 @@ int main(int argc, char *argv[])
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
+    if ((err = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
+        fprintf(stderr, "WSAStartup: %s\n", StrGetLastError(err));
+        exit(0);
+    }
+
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
@@ -196,11 +201,6 @@ int main(int argc, char *argv[])
     binary_semaphore = CreateSemaphoreA(NULL, 1, 1, NULL);
     if (binary_semaphore == NULL) {
         fprintf(stderr, "CreateSemaphoreA: %s\n", StrGetLastError(GetLastError()));
-        exit(0);
-    }
-
-    if ((err = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
-        fprintf(stderr, "WSAStartup: %s\n", StrGetLastError(err));
         exit(0);
     }
 
