@@ -7,7 +7,7 @@ edition = "2021"
 
 [[bin]]
 name = "server"
-path = "rust/server.rs"
+path = "server.rs"
 
 [dependencies]
 chrono = "0.4.37"
