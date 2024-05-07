@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 // import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.Semaphore;
+// import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.Date;
 import java.util.TimeZone;
@@ -22,7 +22,7 @@ public class Server {
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static ReentrantLock mutex;
-    private static Semaphore binarySemaphore;
+    // private static Semaphore binarySemaphore;
     private static long counter = 0;
 
     private static Socket clientSocket;
@@ -65,13 +65,13 @@ public class Server {
             mutex.unlock();
 
             try {
+                // use out = new DataOutputStream(this.clientSocket.getOutputStream());
+                // to write a byte array to a socket
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
 
                 currentTime = new SimpleDateFormat(
                         "'Date: 'EEE, d MMM yyyy HH:mm:ss z");
                 currentTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-
-                content = new StringBuilder();
 
                 out.println("HTTP/1.1 200 OK");
                 out.println(currentTime.format(new Date()));
@@ -79,6 +79,7 @@ public class Server {
                 out.println("Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT");
                 out.println("Accept-Ranges: bytes");
 
+                content = new StringBuilder();
                 content.append("What's up? Your IP address is ");
                 content.append(this.clientSocket.getInetAddress().getHostAddress());
                 content.append("\n");
@@ -131,7 +132,7 @@ public class Server {
         }
 
         mutex = new ReentrantLock();
-        binarySemaphore = new Semaphore(1);
+        // binarySemaphore = new Semaphore(1);
 
         try {
             if (port_number >= 10000) {
@@ -153,6 +154,9 @@ public class Server {
                 // in.read(clientMessageBytes);
                 // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
                 // requestLine = clientMessage.split("\n", 2)[0];
+                //
+                // use reader = new DataInputStream(clientSocket.getInputStream());
+                // to read into a byte array from a socket
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();
