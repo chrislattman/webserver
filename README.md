@@ -6,3 +6,5 @@ After running the server, you can connect to it at http://127.0.0.1:8080. If it 
 Note: the threading (where applicable) used in these files is extremely basic. A real web server would use a thread pool.
 
 Another thing to note is that a real web server would need to validate each HTTP request it receives.
+
+> Side note: sending ICMP packets requires raw sockets, which is limited to users with root privileges.
