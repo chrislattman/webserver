@@ -152,11 +152,9 @@ public class Server {
                 // clientMessageBytes = new byte[4096];
                 // in = new BufferedInputStream(clientSocket.getInputStream());
                 // in.read(clientMessageBytes);
+                // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
                 // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
                 // requestLine = clientMessage.split("\n", 2)[0];
-                //
-                // use reader = new DataInputStream(clientSocket.getInputStream());
-                // to read into a byte array from a socket
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();

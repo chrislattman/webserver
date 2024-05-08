@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     sa.lpSecurityDescriptor = NULL;
     if (!CreatePipe(&fildes[0], &fildes[1], &sa, 0)) {
         fprintf(stderr, "CreatePipe: %s\n", StrGetLastError(GetLastError()));
-        exit(0);
+        exit(1);
     }
     SetHandleInformation(fildes[0], HANDLE_FLAG_INHERIT, 0);
 
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     si.dwFlags |= STARTF_USESTDHANDLES;
     if (!CreateProcessA(NULL, "date", NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
         fprintf(stderr, "CreateProcessA: %s\n", StrGetLastError(GetLastError()));
-        exit(0);
+        exit(1);
     }
     CloseHandle(fildes[1]);
     ReadFile(fildes[0], date, sizeof(date) - 1, NULL, NULL);
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 
     if ((err = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
         fprintf(stderr, "WSAStartup: %s\n", StrGetLastError(err));
-        exit(0);
+        exit(1);
     }
 
     hints.ai_family = AF_INET;
@@ -195,13 +195,13 @@ int main(int argc, char *argv[])
     mutex = CreateMutexA(NULL, FALSE, NULL);
     if (mutex == NULL) {
         fprintf(stderr, "CreateMutexA: %s\n", StrGetLastError(GetLastError()));
-        exit(0);
+        exit(1);
     }
 
     binary_semaphore = CreateSemaphoreA(NULL, 1, 1, NULL);
     if (binary_semaphore == NULL) {
         fprintf(stderr, "CreateSemaphoreA: %s\n", StrGetLastError(GetLastError()));
-        exit(0);
+        exit(1);
     }
 
     // To support IPv6 as well, you could create an AF_INET6 socket and
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     // This happens synchronously, so maybe 2 separate threads are desired.
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
         fprintf(stderr, "socket: %s\n", StrGetLastError(WSAGetLastError()));
-        exit(0);
+        exit(1);
     }
     signal(SIGINT, signal_handler);
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, "1", sizeof(char *)) < 0) {
@@ -256,6 +256,8 @@ int main(int argc, char *argv[])
             goto cleanup;
         }
 
+        // pass MSG_WAITALL in 4th argument to recv to wait for client_message
+        // to fill up with bytes
         if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
             fprintf(stderr, "recv: %s\n", StrGetLastError(WSAGetLastError()));
             goto cleanup;
@@ -301,5 +303,5 @@ cleanup:
         fprintf(stderr, "closesocket: %s\n", StrGetLastError(WSAGetLastError()));
     }
     WSACleanup();
-    return 0;
+    return 1;
 }

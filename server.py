@@ -131,6 +131,7 @@ def main() -> None:
             # sock.connect(("127.0.0.1", 5000))
             # For IPv6, use (client_address, _, _, _) instead
             client_socket, (client_address, _) = server_socket.accept()
+            # pass socket.MSG_WAITALL in 2nd argument of recv to wait for all bytes
             client_message_bytes = client_socket.recv(4096)
             client_message = client_message_bytes.decode()
             request_line = client_message[:client_message.find("\n")]

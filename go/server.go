@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	// "io"
 	"net"
 	"os"
 	"os/exec"
@@ -128,6 +129,7 @@ func main() {
 			goto shutdown
 		}
 		client_message_bytes := make([]byte, 4096)
+		// use io.ReadFull(conn, client_message_bytes) to wait for client_message_bytes to fill up entirely
 		_, err = conn.Read(client_message_bytes)
 		if err != nil {
 			fmt.Println("net.conn.Read:", err)

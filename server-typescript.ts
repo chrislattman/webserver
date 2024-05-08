@@ -62,6 +62,7 @@ function main() {
         ++counter;
         console.log("Handling request #" + counter);
 
+        // use const client_message_bytes = Buffer.from(socket.read(4096)); to wait for all bytes
         socket.on("data", (client_message_bytes: Buffer) => {
             let client_message = client_message_bytes.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\n"));

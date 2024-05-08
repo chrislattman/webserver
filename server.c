@@ -125,13 +125,13 @@ int main(int argc, char *argv[])
 
     if (pipe(fildes) < 0) {
         fprintf(stderr, "pipe: %s\n", strerror(errno));
-        exit(0);
+        exit(1);
     }
 
     switch (fork()) {
     case -1:
         fprintf(stderr, "fork: %s\n", strerror(errno));
-        exit(0);
+        exit(1);
     case 0:
         close(fildes[0]);
         dup2(fildes[1], STDOUT_FILENO);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 
     if ((err = pthread_mutex_init(&mutex, NULL)) != 0) {
         fprintf(stderr, "pthread_mutex_init: %s\n", strerror(err));
-        exit(0);
+        exit(1);
     }
 
     // if (sem_init(&binary_semaphore, 0, 1) < 0) {
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
     // This happens synchronously, so maybe 2 separate threads are desired.
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket: %s\n", strerror(errno));
-        exit(0);
+        exit(1);
     }
     signal(SIGINT, signal_handler);
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) < 0) {
@@ -225,6 +225,7 @@ int main(int argc, char *argv[])
             goto cleanup;
         }
 
+        // pass MSG_WAITALL in 4th argument to recv to wait for client_message to fill up entirely
         if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
             fprintf(stderr, "recv: %s\n", strerror(errno));
             goto cleanup;
@@ -268,5 +269,5 @@ cleanup:
     if (close(server_socket) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
     }
-    return 0;
+    return 1;
 }
