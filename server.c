@@ -1,20 +1,20 @@
 #define _GNU_SOURCE // needed for addrinfo-related symbols
+#include <arpa/inet.h>
+#include <errno.h>
+#include <limits.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <pthread.h>
+// #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <errno.h>
-#include <pthread.h>
-#include <time.h>
-#include <signal.h>
-#include <semaphore.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
 
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;

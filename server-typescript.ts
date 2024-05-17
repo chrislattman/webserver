@@ -3,10 +3,10 @@
  * $ npm i -D typescript @types/node
  * $ npx tsc --strict server-typescript.ts
  */
-import { lookup } from "node:dns";
-import { Server, Socket, createServer } from "node:net";
 import { Buffer } from "node:buffer";
 import { spawnSync } from "node:child_process";
+import { lookup } from "node:dns";
+import { Server, Socket, createServer } from "node:net";
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;

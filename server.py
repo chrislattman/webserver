@@ -1,11 +1,11 @@
 import signal
 import socket
+import subprocess
 import sys
 import time
 from threading import Lock, Semaphore, Thread
 from traceback import print_exception
 from typing_extensions import override
-import subprocess
 
 INT_MAX = 2147483647
 PORT_NUMBER = 8080

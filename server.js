@@ -1,8 +1,8 @@
 "use strict";
 
+const child_process = require("node:child_process");
 const dns = require("node:dns");
 const net = require("node:net");
-const child_process = require("node:child_process");
 
 const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;

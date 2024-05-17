@@ -4,16 +4,16 @@
 
 // Can also use pthread-style functions with mingw-w64 by installing
 // winpthreads and statically linking it with -static [-pthread]
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <sys/types.h>
-#include <WS2tcpip.h>
-#include <errno.h>
-#include <Windows.h>
 #include <time.h>
-#include <signal.h>
+#include <WS2tcpip.h>
+#include <Windows.h>
 
 static const unsigned short PORT_NUMBER = 8080;
 static SOCKET server_socket;
