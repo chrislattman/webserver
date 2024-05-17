@@ -256,8 +256,7 @@ int main(int argc, char *argv[])
             goto cleanup;
         }
 
-        // pass MSG_WAITALL in 4th argument to recv to wait for client_message
-        // to fill up with bytes
+        // pass MSG_WAITALL in 4th argument to recv to wait for client_message to fill up entirely
         if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
             fprintf(stderr, "recv: %s\n", StrGetLastError(WSAGetLastError()));
             goto cleanup;

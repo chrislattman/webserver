@@ -151,8 +151,8 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 // clientMessageBytes = new byte[4096];
                 // in = new BufferedInputStream(clientSocket.getInputStream());
-                // in.read(clientMessageBytes);
                 // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
+                // in.read(clientMessageBytes);
                 // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
                 // requestLine = clientMessage.split("\n", 2)[0];
                 bufferedReader = new BufferedReader(

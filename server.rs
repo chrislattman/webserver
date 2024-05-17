@@ -80,7 +80,7 @@ fn main() {
     for incoming_stream in listener.incoming() {
         // let mut stream = incoming_stream.unwrap();
         // let mut client_message_bytes = [0u8; 4096];
-        // use stream.read_exact() to wait for client_message_bytes to fill up entirely
+        // use stream.read_exact(&mut client_message_bytes).unwrap(); to wait for client_message_bytes to fill up entirely
         // stream.read(&mut client_message_bytes).unwrap();
         // let client_message = from_utf8(&client_message_bytes).unwrap();
         // let (request_line, _) = client_message.split_once("\n").unwrap();
