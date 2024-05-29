@@ -1,3 +1,4 @@
+from enum import Enum
 import signal
 import socket
 import subprocess
@@ -13,6 +14,11 @@ server_socket: socket.socket
 mutex: Lock
 binary_semaphore: Semaphore
 counter = 0
+
+
+class Nettype(Enum):
+    IPv4 = 0
+    IPv6 = 1
 
 
 class ClientHandler(Thread):
@@ -82,6 +88,15 @@ def signal_handler(signum, frame) -> None:
 def main() -> None:
     """Main server loop for the web server."""
     threads = []
+
+    net_type = Nettype.IPv4
+    match net_type:
+        case Nettype.IPv4:
+            print("Using IPv4")
+        case Nettype.IPv6:
+            print("Using IPv6")
+        case _:
+            print("Unknown protocol.")
 
     date = subprocess.run(["date"], capture_output=True)
     print("Current time: " + date.stdout.decode(), end="")

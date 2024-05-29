@@ -22,6 +22,11 @@ var mutex sync.Mutex
 // var channel chan bool
 var counter uint64 = 0
 
+const (
+	IPv4 = iota
+	IPv6
+)
+
 // Handles client connections.
 func handleConnection(conn net.Conn) {
 	// critical section
@@ -74,6 +79,16 @@ func signalHandler() {
 // Main server loop for the web server.
 func main() {
 	var err error
+
+	netType := IPv4
+	switch netType {
+	case IPv4:
+		fmt.Println("Using IPv4")
+	case IPv6:
+		fmt.Println("Using IPv6")
+	default:
+		fmt.Println("Unknown protocol.")
+	}
 
 	date, err := exec.Command("date").Output()
 	if err != nil {

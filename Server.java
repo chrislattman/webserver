@@ -19,6 +19,11 @@ import java.util.TimeZone;
  * Server class which contains the main server loop and client thread.
  */
 public class Server {
+    enum Nettype {
+        IPv4,
+        IPv6
+    }
+
     private static final int PORT_NUMBER = 8080;
     private static ServerSocket serverSocket;
     private static ReentrantLock mutex;
@@ -103,6 +108,18 @@ public class Server {
      * @param args unused
      */
     public static void main(String[] args) {
+        Nettype netType = Nettype.IPv4;
+        switch (netType) {
+            case IPv4:
+                System.out.println("Using IPv4");
+                break;
+            case IPv6:
+                System.out.println("Using IPv6");
+                break;
+            default:
+                System.out.println("Unknown protocol.");
+        }
+
         String[] cmd = {"date"};
         try {
             Process process = Runtime.getRuntime().exec(cmd);

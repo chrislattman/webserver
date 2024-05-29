@@ -17,6 +17,12 @@ static MUTEX: Mutex<u64> = Mutex::new(0);
 // Rust std deprecated Semaphore since v1.7.0: https://doc.rust-lang.org/1.7.0/std/sync/struct.Semaphore.html
 // Check out tokio: https://docs.rs/tokio/latest/tokio/sync/struct.Semaphore.html
 
+#[derive(PartialEq)]
+enum Nettype {
+    IPv4,
+    IPv6,
+}
+
 /// Thread that handles each client connection.
 fn client_handler(mut stream: TcpStream) {
     // critical section
@@ -46,6 +52,13 @@ fn client_handler(mut stream: TcpStream) {
 
 /// Main server loop for the web server.
 fn main() {
+    let net_type = Nettype::IPv4;
+    match net_type {
+        Nettype::IPv4 => println!("Using IPv4"),
+        Nettype::IPv6 => println!("Using IPv6"),
+        _ => println!("Unknown protocol."),
+    }
+
     let output = Command::new("date").output().unwrap().stdout;
     let date = from_utf8(&output).unwrap();
     print!("Current time: {}", date);

@@ -8,6 +8,11 @@ const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
 var counter = 0;
 
+const Nettype = Object.freeze({
+    IPv4: 0,
+    IPv6: 1,
+});
+
 /**
  * Prints out error if it isn't undefined.
  *
@@ -35,6 +40,18 @@ function signal_handler(server) {
  * Main server loop for the web server.
  */
 function main() {
+    const netType = Nettype.IPv4;
+    switch (netType) {
+        case Nettype.IPv4:
+            console.log("Using IPv4");
+            break;
+        case Nettype.IPv6:
+            console.log("Using IPv6");
+            break;
+        default:
+            console.log("Unknown protocol.");
+    }
+
     let date = child_process.spawnSync("date");
     process.stdout.write(`Current time: ${date.stdout}`);
 

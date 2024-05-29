@@ -27,6 +27,11 @@ typedef struct sock_info {
     struct in_addr  client_address;
 } sock_info;
 
+enum nettype {
+    IPv4,
+    IPv6,
+};
+
 static char *StrGetLastError(int error_code)
 {
     LPSTR messageBuffer = NULL;
@@ -144,6 +149,19 @@ int main(int argc, char *argv[])
     char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
     long request_line_length;
     struct addrinfo *ipaddrs, *res, hints = {0};
+
+    enum nettype val = IPv4;
+    switch (net_type)
+    {
+    case IPv4:
+        printf("Using IPv4\n");
+        break;
+    case IPv6:
+        printf("Using IPv6\n");
+        break;
+    default:
+        printf("Unknown protocol.\n");
+    }
 
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.bInheritHandle = TRUE;
