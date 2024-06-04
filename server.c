@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     case 0:
         close(fildes[0]);
         dup2(fildes[1], STDOUT_FILENO);
-        execlp("date", "", NULL);
+        execlp("date", "date", (char *) 0);
         exit(0);
     default:
         close(fildes[1]);
