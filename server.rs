@@ -90,6 +90,7 @@ fn main() {
         TcpListener::bind("127.0.0.1:".to_owned() + &PORT_NUMBER.to_string()).unwrap()
     };
 
+    let mut threads = vec![];
     for incoming_stream in listener.incoming() {
         // let mut stream = incoming_stream.unwrap();
         // let mut client_message_bytes = [0u8; 4096];
@@ -101,8 +102,15 @@ fn main() {
         let buf_reader = BufReader::new(&stream);
         let request_line = buf_reader.lines().next().unwrap().unwrap();
         println!("{}", request_line);
-        spawn(|| {
+        threads.push(spawn(|| {
             client_handler(stream);
-        });
+        }));
+
+        if threads.len() >= 50 {
+            while threads.len() > 0 {
+                let curr_thread = threads.remove(0);
+                curr_thread.join().unwrap();
+            }
+        }
     }
 }

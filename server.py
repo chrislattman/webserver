@@ -87,7 +87,7 @@ def signal_handler(signum, frame) -> None:
 
 def main() -> None:
     """Main server loop for the web server."""
-    threads = []
+    threads: list[ClientHandler] = []
 
     net_type = Nettype.IPv4
     match net_type:
@@ -159,7 +159,7 @@ def main() -> None:
             if len(threads) >= 50:
                 for t in threads:
                     t.join()
-                threads = []
+                threads.clear()
     except Exception as e:
         print_exception(e)
         server_socket.close()
