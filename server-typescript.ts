@@ -59,7 +59,7 @@ function main() {
     let date = spawnSync("date");
     process.stdout.write(`Current time: ${date.stdout}`);
 
-    lookup("www.google.com", {family: 4, all: true}, (err, ipaddrs) => {
+    lookup("www.google.com", {family: 4, all: true}, (_, ipaddrs) => {
         console.log("IPv4 addresses associated with www.google.com:");
         ipaddrs.forEach((res) => {
             console.log(res.address);

@@ -66,7 +66,9 @@ fn main() {
     let ipaddrs = "www.google.com:443".to_socket_addrs().unwrap();
     println!("IPv4 addresses associated with www.google.com:");
     for res in ipaddrs {
-        println!("{}", res.to_string().replace(":443", ""));
+        if res.is_ipv4() {
+            println!("{}", res.to_string().replace(":443", ""));
+        }
     }
 
     let mut port_number: u16 = 0;

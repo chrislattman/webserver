@@ -32,7 +32,7 @@ enum nettype {
     IPv6,
 };
 
-static char *StrGetLastError(int error_code)
+static char *StrGetLastError(DWORD error_code)
 {
     LPSTR messageBuffer = NULL;
 

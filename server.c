@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
         close(fildes[0]);
         dup2(fildes[1], STDOUT_FILENO);
         execlp("date", "date", (char *) 0);
+        return 1; // to prevent fallthrough in case of an execlp error
     default:
         close(fildes[1]);
         read(fildes[0], date, sizeof(date) - 1);

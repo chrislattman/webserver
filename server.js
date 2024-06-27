@@ -55,7 +55,7 @@ function main() {
     let date = child_process.spawnSync("date");
     process.stdout.write(`Current time: ${date.stdout}`);
 
-    dns.lookup("www.google.com", {family: 4, all: true}, (err, ipaddrs) => {
+    dns.lookup("www.google.com", {family: 4, all: true}, (_, ipaddrs) => {
         console.log("IPv4 addresses associated with www.google.com:");
         ipaddrs.forEach((res) => {
             console.log(res.address);
