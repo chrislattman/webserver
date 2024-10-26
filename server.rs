@@ -56,7 +56,7 @@ fn main() {
     match net_type {
         Nettype::IPv4 => println!("Using IPv4"),
         Nettype::IPv6 => println!("Using IPv6"),
-        _ => println!("Unknown protocol."),
+        // _ => println!("Unknown protocol."),
     }
 
     let output = Command::new("date").output().unwrap().stdout;
@@ -72,7 +72,7 @@ fn main() {
     }
 
     let mut port_number: u16 = 0;
-    let args: Vec<String> = args().collect();
+    let args: Vec<_> = args().collect();
     if args.len() == 2 {
         let args1 = &args[1];
         port_number = args1.parse().unwrap();
@@ -92,7 +92,7 @@ fn main() {
         TcpListener::bind("127.0.0.1:".to_owned() + &PORT_NUMBER.to_string()).unwrap()
     };
 
-    let mut threads = vec![];
+    let mut threads = Vec::new();
     for incoming_stream in listener.incoming() {
         // let mut stream = incoming_stream.unwrap();
         // let mut client_message_bytes = [0u8; 4096];
