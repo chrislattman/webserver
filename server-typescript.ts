@@ -92,7 +92,7 @@ function main() {
         server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
         server_message += "Accept-Ranges: bytes\n"
 
-        let content = `What's up? Your IP address is ${socket.remoteAddress}\n`;
+        let content = `What's up? This server was written in TypeScript (Node.js). Your IP address is ${socket.remoteAddress}\n`;
 
         server_message += `Content-Length: ${content.length}\n`;
         server_message += "Content-Type: text/html\n\n";

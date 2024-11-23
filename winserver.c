@@ -89,7 +89,7 @@ static DWORD WINAPI client_handler(LPVOID arg)
     strcat(server_message, "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n");
     strcat(server_message, "Accept-Ranges: bytes\n");
 
-    strcpy(content, "What's up? Your IP address is ");
+    strcpy(content, "What's up? This server was written in Win32 C. Your IP address is ");
     inet_ntop(AF_INET, &client_address, content + strlen(content), INET_ADDRSTRLEN);
     strcat(content, "\n");
 

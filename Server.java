@@ -85,7 +85,7 @@ public class Server {
                 out.println("Accept-Ranges: bytes");
 
                 content = new StringBuilder();
-                content.append("What's up? Your IP address is ");
+                content.append("What's up? This server was written in Java. Your IP address is ");
                 content.append(this.clientSocket.getInetAddress().getHostAddress());
                 content.append("\n");
 

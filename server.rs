@@ -40,7 +40,7 @@ fn client_handler(mut stream: TcpStream) {
     server_message += "Accept-Ranges: bytes\n";
 
     let client_address = stream.peer_addr().unwrap().ip();
-    let content = format!("What's up? Your IP address is {}\n", client_address);
+    let content = format!("What's up? This server was written in Rust. Your IP address is {}\n", client_address);
 
     server_message += &format!("Content-Length: {}\n", content.len());
     server_message += "Content-Type: text/html\n\n";

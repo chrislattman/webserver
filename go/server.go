@@ -49,7 +49,7 @@ func handleConnection(conn net.Conn) {
 	server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
 	server_message += "Accept-Ranges: bytes\n"
 
-	content := "What's up? Your IP address is " + full_address[:last_index] + "\n"
+	content := "What's up? This server was written in Go. Your IP address is " + full_address[:last_index] + "\n"
 
 	server_message += "Content-Length: " + fmt.Sprintln(len(content))
 	server_message += "Content-Type: text/html\n\n"
