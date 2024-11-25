@@ -4,6 +4,12 @@
 #include <limits.h>
 #include <netdb.h>
 #include <netinet/in.h>
+// C11 introduces threads.h which subsumes the need for libpthread with
+// simpler functionality (no thread attributes) ONLY IF __STDC_NO_THREADS__ is
+// undefined by the compiler.
+// For all data types and functions, "thrd" replaces "pthread", except for
+// mutexes, in which case "mtx" replaces "pthread_mutex" (there's also support
+// for condition variables)
 #include <pthread.h>
 // #include <semaphore.h>
 #include <signal.h>
