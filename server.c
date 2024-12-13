@@ -133,13 +133,13 @@ int main(int argc, char *argv[])
     switch (net_type)
     {
     case IPv4:
-        printf("Using IPv4\n");
+        puts("Using IPv4");
         break;
     case IPv6:
-        printf("Using IPv6\n");
+        puts("Using IPv6");
         break;
     default:
-        printf("Unknown protocol.\n");
+        puts("Unknown protocol.");
     }
 
     // FILE *fp = popen("date", "r");
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     if ((err = getaddrinfo("www.google.com", NULL, &hints, &ipaddrs)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(err));
     }
-    printf("IPv4 addresses associated with www.google.com:\n");
+    puts("IPv4 addresses associated with www.google.com:");
     for (res = ipaddrs; res != NULL; res = res->ai_next) {
         inet_ntop(res->ai_family, &((struct sockaddr_in *)res->ai_addr)->sin_addr, addr, sizeof(addr));
         printf("%s\n", addr);
