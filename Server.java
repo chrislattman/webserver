@@ -25,19 +25,9 @@ public class Server {
     }
 
     private static final int PORT_NUMBER = 8080;
-    private static ServerSocket serverSocket;
     private static ReentrantLock mutex;
     // private static Semaphore binarySemaphore;
     private static long counter = 0;
-
-    private static Socket clientSocket;
-    // private static byte[] clientMessageBytes;
-    // private static BufferedInputStream in;
-    // private static String clientMessage;
-    private static BufferedReader bufferedReader;
-    private static String requestLine;
-    private static ClientHandler[] threads;
-    private static int threadIndex;
 
     /**
      * Handles client connections.
@@ -74,12 +64,12 @@ public class Server {
                 // to write a byte array to a socket
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
 
-                currentTime = new SimpleDateFormat(
-                        "'Date: 'EEE, d MMM yyyy HH:mm:ss z");
-                currentTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-
                 out.println("HTTP/1.1 200 OK");
+
+                currentTime = new SimpleDateFormat("'Date: 'EEE, d MMM yyyy HH:mm:ss z");
+                currentTime.setTimeZone(TimeZone.getTimeZone("GMT"));
                 out.println(currentTime.format(new Date()));
+
                 out.println("Server: Web Server");
                 out.println("Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT");
                 out.println("Accept-Ranges: bytes");
@@ -118,6 +108,7 @@ public class Server {
                 break;
             default:
                 System.out.println("Unknown protocol.");
+                break;
         }
 
         String[] cmd = {"date"};
@@ -143,25 +134,32 @@ public class Server {
             e.printStackTrace();
         }
 
-        int port_number = 0;
+        int portNumber = 0;
         if (args.length == 1) {
-            port_number = Integer.parseInt(args[0]) & 65535;
+            portNumber = Integer.parseInt(args[0]) & 65535;
         }
 
         mutex = new ReentrantLock();
         // binarySemaphore = new Semaphore(1);
 
+        ServerSocket serverSocket = null;
         try {
-            if (port_number >= 10000) {
-                serverSocket = new ServerSocket(port_number, Integer.MAX_VALUE,
+            if (portNumber >= 10000) {
+                serverSocket = new ServerSocket(portNumber, Integer.MAX_VALUE,
                     InetAddress.getLoopbackAddress()); // InetAddress.getByName("127.0.0.1") or InetAddress.getByName("::1") for IPv6
             } else {
                 serverSocket = new ServerSocket(PORT_NUMBER, Integer.MAX_VALUE,
                     InetAddress.getLoopbackAddress()); // InetAddress.getByName("127.0.0.1") or InetAddress.getByName("::1") for IPv6
             }
             serverSocket.setReuseAddress(true);
-            threads = new ClientHandler[60];
-            threadIndex = 0;
+            Socket clientSocket;
+            ClientHandler[] threads = new ClientHandler[60];
+            int threadIndex = 0;
+            // byte[] clientMessageBytes;
+            // BufferedInputStream in;
+            // String clientMessage;
+            BufferedReader bufferedReader;
+            String requestLine;
             while (true) {
                 // To connect to a server:
                 // Socket sock = new Socket("127.0.0.1", 5000);
@@ -171,7 +169,7 @@ public class Server {
                 // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
                 // in.read(clientMessageBytes);
                 // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
-                // requestLine = clientMessage.split("\n", 2)[0];
+                // requestLine = clientMessage.split("\n", 2)[0]; // this keeps the rest of the body in one String
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();

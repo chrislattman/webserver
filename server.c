@@ -46,12 +46,11 @@ enum nettype {
  */
 static void *client_handler(void *arg)
 {
-    char server_message[4096], content[64], content_length[64], date[64];
+    char server_message[4096], content[128], content_length[64], date[64];
     sock_info *socket_info;
     int client_socket;
     struct in_addr client_address;
     time_t curr_time;
-    struct tm *time_info;
 
     // critical section
     pthread_mutex_lock(&mutex); // using a mutex
@@ -65,12 +64,12 @@ static void *client_handler(void *arg)
     client_socket = socket_info->client_socket;
     client_address = socket_info->client_address;
 
-    curr_time = time(NULL);
-    time_info = gmtime(&curr_time);
-
     strcpy(server_message, "HTTP/1.1 200 OK\n");
-    strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", time_info);
+
+    curr_time = time(NULL);
+    strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", gmtime(&curr_time));
     strcat(server_message, date);
+
     strcat(server_message, "Server: Web Server\n");
     strcat(server_message, "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n");
     strcat(server_message, "Accept-Ranges: bytes\n");
@@ -140,6 +139,7 @@ int main(int argc, char *argv[])
         break;
     default:
         puts("Unknown protocol.");
+        break;
     }
 
     // FILE *fp = popen("date", "r");

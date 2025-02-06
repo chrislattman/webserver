@@ -37,25 +37,27 @@ func handleConnection(conn net.Conn) {
 	// channel <- true
 	mutex.Unlock()
 
-	full_address := conn.RemoteAddr().String()
-	full_address = strings.ReplaceAll(full_address, "[", "")
-	full_address = strings.ReplaceAll(full_address, "]", "")
-	last_index := strings.LastIndex(full_address, ":")
+	fullAddress := conn.RemoteAddr().String()
+	fullAddress = strings.ReplaceAll(fullAddress, "[", "")
+	fullAddress = strings.ReplaceAll(fullAddress, "]", "")
+	lastIndex := strings.LastIndex(fullAddress, ":")
 
-	server_message := "HTTP/1.1 200 OK\n"
+	serverMessage := "HTTP/1.1 200 OK\n"
+
 	date := time.Now().UTC().Format(time.RFC1123)
-	server_message += "Date: " + strings.Replace(date, "UTC", "GMT\n", 1)
-	server_message += "Server: Web Server\n"
-	server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
-	server_message += "Accept-Ranges: bytes\n"
+	serverMessage += "Date: " + strings.Replace(date, "UTC", "GMT\n", 1)
 
-	content := "What's up? This server was written in Go. Your IP address is " + full_address[:last_index] + "\n"
+	serverMessage += "Server: Web Server\n"
+	serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
+	serverMessage += "Accept-Ranges: bytes\n"
 
-	server_message += "Content-Length: " + fmt.Sprintln(len(content))
-	server_message += "Content-Type: text/html\n\n"
-	server_message += content
+	content := "What's up? This server was written in Go. Your IP address is " + fullAddress[:lastIndex] + "\n"
 
-	_, err := conn.Write([]byte(server_message))
+	serverMessage += "Content-Length: " + fmt.Sprintln(len(content))
+	serverMessage += "Content-Type: text/html\n\n"
+	serverMessage += content
+
+	_, err := conn.Write([]byte(serverMessage))
 	if err != nil {
 		fmt.Println("net.Conn.Write:", err)
 		return
@@ -107,20 +109,20 @@ func main() {
 		}
 	}
 
-	var port_number = 0
+	var portNumber = 0
 	if len(os.Args) == 2 {
-		port_number, _ = strconv.Atoi(os.Args[1])
-		port_number &= 65535
+		portNumber, _ = strconv.Atoi(os.Args[1])
+		portNumber &= 65535
 	}
 
 	// channel = make(chan bool, 1) // creating a channel to work like a binary semaphore
 	// channel <- true
-	signal_channel := make(chan os.Signal, 1)
+	signalChannel := make(chan os.Signal, 1)
 
 	// No default way of setting SO_REUSEADDR
-	if port_number >= 10000 {
+	if portNumber >= 10000 {
 		// "[::1]:" for IPv6
-		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(port_number))
+		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(portNumber))
 	} else {
 		// "[::1]:" for IPv6
 		ln, err = net.Listen("tcp", "127.0.0.1:"+fmt.Sprint(PORT_NUMBER))
@@ -129,9 +131,9 @@ func main() {
 		fmt.Println("net.Listen:", err)
 		goto shutdown
 	}
-	signal.Notify(signal_channel, syscall.SIGINT)
+	signal.Notify(signalChannel, syscall.SIGINT)
 	go func() {
-		<-signal_channel
+		<-signalChannel
 		signalHandler()
 	}()
 
@@ -143,18 +145,18 @@ func main() {
 			fmt.Println("net.Listener.Accept:", err)
 			goto shutdown
 		}
-		client_message_bytes := make([]byte, 4096)
-		// use io.ReadFull(conn, client_message_bytes) to wait for client_message_bytes to fill up entirely
-		_, err = conn.Read(client_message_bytes)
+		clientMessageBytes := make([]byte, 4096)
+		// use io.ReadFull(conn, client_message_bytes) to wait for clientMessageBytes to fill up entirely
+		_, err = conn.Read(clientMessageBytes)
 		if err != nil {
 			fmt.Println("net.conn.Read:", err)
 			goto shutdown
 		}
-		client_message := string(client_message_bytes)
-		request_line, _, _ := strings.Cut(client_message, "\n")
-		// request_line := clientMessage[:strings.Index(clientMessage, "\n")]
-		// request_line := clientMessage[:strings.IndexRune(clientMessage, '\n')]
-		fmt.Println(request_line)
+		clientMessage := string(clientMessageBytes)
+		requestLine, _, _ := strings.Cut(clientMessage, "\n")
+		// requestLine := clientMessage[:strings.Index(clientMessage, "\n")]
+		// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\n')]
+		fmt.Println(requestLine)
 		go handleConnection(conn)
 	}
 

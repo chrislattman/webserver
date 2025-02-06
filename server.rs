@@ -33,8 +33,10 @@ fn client_handler(mut stream: TcpStream) {
     }
 
     let mut server_message = "HTTP/1.1 200 OK\n".to_string();
+
     let date = Utc::now().to_rfc2822().replace(" +0000", "");
     server_message += &format!("Date: {} GMT\n", date);
+
     server_message += "Server: Web Server\n";
     server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
     server_message += "Accept-Ranges: bytes\n";

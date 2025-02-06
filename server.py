@@ -59,8 +59,10 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
     mutex.release()
 
     server_message = "HTTP/1.1 200 OK\n"
+
     format_string = "Date: %a, %d %b %Y %X GMT\n"
     server_message += time.strftime(format_string, time.gmtime())
+
     server_message += "Server: Web Server\n"
     server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
     server_message += "Accept-Ranges: bytes\n"

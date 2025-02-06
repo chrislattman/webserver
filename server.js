@@ -4,8 +4,8 @@ const child_process = require("node:child_process");
 const dns = require("node:dns");
 const net = require("node:net");
 
-const PORT_NUMBER = 8080;
 const INT_MAX = 2147483647;
+const PORT_NUMBER = 8080;
 var counter = 0;
 
 const Nettype = Object.freeze({
@@ -29,7 +29,7 @@ function checkError(err) {
  *
  * @param {net.Server} server server to close
  */
-function signal_handler(server) {
+function signalHandler(server) {
     process.on("SIGINT", () => {
         server.close(checkError);
         process.exit(0);
@@ -50,6 +50,7 @@ function main() {
             break;
         default:
             console.log("Unknown protocol.");
+            break;
     }
 
     let date = child_process.spawnSync("date");
@@ -62,9 +63,9 @@ function main() {
         });
     });
 
-    let port_number = 0;
+    let portNumber = 0;
     if (process.argv.length == 3) {
-        port_number = parseInt(process.argv[2]) & 65535;
+        portNumber = parseInt(process.argv[2]) & 65535;
     }
 
     // To connect to a server:
@@ -82,33 +83,36 @@ function main() {
             let request_line = client_message.substring(0, client_message.indexOf("\n"));
             console.log(request_line);
         });
-        let server_message = "HTTP/1.1 200 OK\n";
+
+        let serverMessage = "HTTP/1.1 200 OK\n";
+
         let now = new Date();
-        server_message += `Date: ${now.toUTCString()}\n`;
-        server_message += "Server: Web Server\n";
-        server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
-        server_message += "Accept-Ranges: bytes\n"
+        serverMessage += `Date: ${now.toUTCString()}\n`;
+
+        serverMessage += "Server: Web Server\n";
+        serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
+        serverMessage += "Accept-Ranges: bytes\n"
 
         let content = `What's up? This server was written in JavaScript (Node.js). Your IP address is ${socket.remoteAddress}\n`;
 
-        server_message += `Content-Length: ${content.length}\n`;
-        server_message += "Content-Type: text/html\n\n";
-        server_message += content;
-        socket.end(server_message);
+        serverMessage += `Content-Length: ${content.length}\n`;
+        serverMessage += "Content-Type: text/html\n\n";
+        serverMessage += content;
+        socket.end(serverMessage);
     });
     server.on("error", (err) => {
         console.error(err);
         server.close(checkError);
     });
-    if (port_number >= 10000) {
+    if (portNumber >= 10000) {
         // SO_REUSEADDR is set by default
-        server.listen(port_number, "127.0.0.1", INT_MAX, () => { // "::1" for IPv6
-            signal_handler(server);
+        server.listen(portNumber, "127.0.0.1", INT_MAX, () => { // "::1" for IPv6
+            signalHandler(server);
         });
     } else {
         // SO_REUSEADDR is set by default
         server.listen(PORT_NUMBER, "127.0.0.1", INT_MAX, () => { // "::1" for IPv6
-            signal_handler(server);
+            signalHandler(server);
         });
     }
 }
