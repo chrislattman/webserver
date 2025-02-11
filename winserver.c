@@ -1,9 +1,16 @@
 // Compiled with mingw-w64 on MSYS2: gcc -o winserver winserver.c -lws2_32
 // This statically links libws2_32.a, which contains small stubs that
 // redirect to ws2_32.dll (much like ws2_32.lib)
+// Could also define (after the headers):
+// #pragma comment(lib, "Ws2_32.lib")
 
 // Can also use pthread-style functions with mingw-w64 by installing
 // winpthreads and statically linking it with -static [-pthread]
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -12,8 +19,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <WS2tcpip.h>
 #include <Windows.h>
+#include <winsock2.h>
+#include <WS2tcpip.h>
 
 static const unsigned short PORT_NUMBER = 8080;
 static SOCKET server_socket;
