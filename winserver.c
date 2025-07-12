@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     HANDLE fildes[2], thread_handle[60], new_thread;
     DWORD thread_id[60];
     sock_info socket_info;
-    char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
+    char date[30], client_message[4096], *headers_begin, addr[INET_ADDRSTRLEN];
     long request_line_length;
     struct addrinfo *ipaddrs, *res, hints = {0};
 
@@ -290,14 +290,8 @@ int main(int argc, char *argv[])
         headers_begin = strchr(client_message, '\n');
         // headers_begin = strstr(client_message, "\n");
         request_line_length = headers_begin - client_message;
-        request_line = calloc(request_line_length + 1, sizeof(char));
-        if (request_line == NULL) {
-            fprintf(stderr, "malloc: %s\n", strerror(errno));
-            goto cleanup;
-        }
-        strncpy(request_line, client_message, request_line_length);
-        printf("%s\n", request_line);
-        free(request_line);
+        client_message[request_line_length] = '\0';
+        printf("%s\n", client_message);
 
         // would need to deep copy sin6_addr to client_address for IPv6
         socket_info = (sock_info) {

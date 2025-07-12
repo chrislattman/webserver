@@ -11,7 +11,11 @@
 // mutexes, in which case "mtx" replaces "pthread_mutex" (there's also support
 // for condition variables)
 #include <pthread.h>
+// #ifdef __linux__
 // #include <semaphore.h>
+// #elif __APPLE__
+// #include <dispatch/dispatch.h>
+// #endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +29,11 @@
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
 static pthread_mutex_t mutex;
-// static sem_t binary_semaphore; // Supported on Linux only, for macOS use Grand Central Dispatch
+// #ifdef __linux__
+// static sem_t binary_semaphore;
+// #elif __APPLE__
+// static dispatch_semaphore_t binary_semaphore;
+// #endif
 static unsigned long long counter = 0;
 
 typedef struct sock_info {
@@ -54,10 +62,18 @@ static void *client_handler(void *arg)
 
     // critical section
     pthread_mutex_lock(&mutex); // using a mutex
-    // sem_wait(&binary_semaphore); // using a binary semaphore
+// #ifdef __linux__
+//     sem_wait(&binary_semaphore); // using a binary semaphore
+// #elif __APPLE__
+//     dispatch_semaphore_wait(binary_semaphore, DISPATCH_TIME_FOREVER);
+// #endif
     ++counter;
     printf("Handling request #%llu\n", counter);
-    // sem_post(&binary_semaphore);
+// #ifdef __linux__
+//     sem_post(&binary_semaphore);
+// #elif __APPLE__
+//     dispatch_semaphore_signal(binary_semaphore);
+// #endif
     pthread_mutex_unlock(&mutex);
 
     socket_info = (sock_info *) arg;
@@ -124,7 +140,7 @@ int main(int argc, char *argv[])
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
     pthread_t thread_id[60];
     sock_info socket_info;
-    char date[30], client_message[4096], *headers_begin, *request_line, addr[INET_ADDRSTRLEN];
+    char date[30], client_message[4096], *headers_begin, addr[INET_ADDRSTRLEN];
     long request_line_length;
     struct addrinfo *ipaddrs, *res, hints = {0};
 
@@ -192,10 +208,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // if (sem_init(&binary_semaphore, 0, 1) < 0) {
-    //     fprintf(stderr, "sem_init: %s\n", strerror(errno));
-    //     exit(0);
-    // }
+// #ifdef __linux__
+//     if (sem_init(&binary_semaphore, 0, 1) < 0) {
+//         fprintf(stderr, "sem_init: %s\n", strerror(errno));
+//         exit(0);
+//     }
+// #elif __APPLE__
+//     binary_semaphore = dispatch_semaphore_create(1);
+// #endif
 
     // To support IPv6 as well, one could create an AF_INET6 socket and
     // initially use FD_ZERO() and FD_SET(), and then select() and FD_ISSET()
@@ -257,14 +277,8 @@ int main(int argc, char *argv[])
         headers_begin = strchr(client_message, '\n');
         // headers_begin = strstr(client_message, "\n");
         request_line_length = headers_begin - client_message;
-        request_line = calloc(request_line_length + 1, sizeof(char));
-        if (request_line == NULL) {
-            fprintf(stderr, "malloc: %s\n", strerror(errno));
-            goto cleanup;
-        }
-        strncpy(request_line, client_message, request_line_length);
-        printf("%s\n", request_line);
-        free(request_line);
+        client_message[request_line_length] = '\0';
+        printf("%s\n", client_message);
 
         // would need to deep copy sin6_addr to client_address for IPv6
         socket_info = (sock_info) {
