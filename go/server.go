@@ -42,19 +42,19 @@ func handleConnection(conn net.Conn) {
 	fullAddress = strings.ReplaceAll(fullAddress, "]", "")
 	lastIndex := strings.LastIndex(fullAddress, ":")
 
-	serverMessage := "HTTP/1.1 200 OK\n"
+	serverMessage := "HTTP/1.1 200 OK\r\n"
 
 	date := time.Now().UTC().Format(time.RFC1123)
-	serverMessage += "Date: " + strings.Replace(date, "UTC", "GMT\n", 1)
+	serverMessage += "Date: " + strings.Replace(date, "UTC", "GMT\r\n", 1)
 
-	serverMessage += "Server: Web Server\n"
-	serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
-	serverMessage += "Accept-Ranges: bytes\n"
+	serverMessage += "Server: Web Server\r\n"
+	serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n"
+	serverMessage += "Accept-Ranges: bytes\r\n"
 
-	content := "What's up? This server was written in Go. Your IP address is " + fullAddress[:lastIndex] + "\n"
+	content := "What's up? This server was written in Go. Your IP address is " + fullAddress[:lastIndex] + "\r\n"
 
-	serverMessage += "Content-Length: " + fmt.Sprintln(len(content))
-	serverMessage += "Content-Type: text/html\n\n"
+	serverMessage += fmt.Sprintf("Content-Length: %v\r\n", len(content))
+	serverMessage += "Content-Type: text/html\r\n\r\n"
 	serverMessage += content
 
 	_, err := conn.Write([]byte(serverMessage))
@@ -153,9 +153,9 @@ func main() {
 			goto shutdown
 		}
 		clientMessage := string(clientMessageBytes)
-		requestLine, _, _ := strings.Cut(clientMessage, "\n")
-		// requestLine := clientMessage[:strings.Index(clientMessage, "\n")]
-		// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\n')]
+		requestLine, _, _ := strings.Cut(clientMessage, "\r\n")
+		// requestLine := clientMessage[:strings.Index(clientMessage, "\r\n")]
+		// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\r\n')]
 		fmt.Println(requestLine)
 		go handleConnection(conn)
 	}

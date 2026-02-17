@@ -80,23 +80,23 @@ static void *client_handler(void *arg)
     client_socket = socket_info->client_socket;
     client_address = socket_info->client_address;
 
-    strcpy(server_message, "HTTP/1.1 200 OK\n");
+    strcpy(server_message, "HTTP/1.1 200 OK\r\n");
 
     curr_time = time(NULL);
-    strftime(date, 64, "Date: %a, %d %b %Y %X GMT\n", gmtime(&curr_time));
+    strftime(date, 64, "Date: %a, %d %b %Y %X GMT\r\n", gmtime(&curr_time));
     strcat(server_message, date);
 
-    strcat(server_message, "Server: Web Server\n");
-    strcat(server_message, "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n");
-    strcat(server_message, "Accept-Ranges: bytes\n");
+    strcat(server_message, "Server: Web Server\r\n");
+    strcat(server_message, "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n");
+    strcat(server_message, "Accept-Ranges: bytes\r\n");
 
     strcpy(content, "What's up? This server was written in POSIX C. Your IP address is ");
     inet_ntop(AF_INET, &client_address, content + strlen(content), INET_ADDRSTRLEN);
-    strcat(content, "\n");
+    strcat(content, "\r\n");
 
-    sprintf(content_length, "Content-Length: %zu\n", strlen(content));
+    sprintf(content_length, "Content-Length: %zu\r\n", strlen(content));
     strcat(server_message, content_length);
-    strcat(server_message, "Content-Type: text/html\n\n");
+    strcat(server_message, "Content-Type: text/html\r\n\r\n");
     strcat(server_message, content);
 
     if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
@@ -270,12 +270,12 @@ int main(int argc, char *argv[])
         }
 
         // pass MSG_WAITALL in 4th argument to recv to wait for client_message to fill up entirely
+        // The logic in lines 274-282 should be in client_handler (in the event of client sending nothing)
         if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
             fprintf(stderr, "recv: %s\n", strerror(errno));
             goto cleanup;
         }
-        headers_begin = strchr(client_message, '\n');
-        // headers_begin = strstr(client_message, "\n");
+        headers_begin = strstr(client_message, "\r\n");
         request_line_length = headers_begin - client_message;
         client_message[request_line_length] = '\0';
         printf("%s\n", client_message);

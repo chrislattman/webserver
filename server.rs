@@ -32,22 +32,22 @@ fn client_handler(mut stream: TcpStream) {
         println!("Handling request #{}", *counter);
     }
 
-    let mut server_message = "HTTP/1.1 200 OK\n".to_string();
+    let mut server_message = "HTTP/1.1 200 OK\r\n".to_string();
 
     let date = Utc::now().to_rfc2822().replace(" +0000", "");
-    server_message += &format!("Date: {date} GMT\n");
+    server_message += &format!("Date: {date} GMT\r\n");
 
-    server_message += "Server: Web Server\n";
-    server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
-    server_message += "Accept-Ranges: bytes\n";
+    server_message += "Server: Web Server\r\n";
+    server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n";
+    server_message += "Accept-Ranges: bytes\r\n";
 
     let client_address = stream.peer_addr().unwrap().ip();
     let content = format!(
-        "What's up? This server was written in Rust. Your IP address is {client_address}\n"
+        "What's up? This server was written in Rust. Your IP address is {client_address}\r\n"
     );
 
-    server_message += &format!("Content-Length: {}\n", content.len());
-    server_message += "Content-Type: text/html\n\n";
+    server_message += &format!("Content-Length: {}\r\n", content.len());
+    server_message += "Content-Type: text/html\r\n\r\n";
     server_message += &content;
 
     stream.write_all(server_message.as_bytes()).unwrap();
@@ -103,7 +103,7 @@ fn main() {
         // use stream.read_exact(&mut client_message_bytes).unwrap(); to wait for client_message_bytes to fill up entirely
         // stream.read(&mut client_message_bytes).unwrap();
         // let client_message = from_utf8(&client_message_bytes).unwrap();
-        // let (request_line, _) = client_message.split_once("\n").unwrap();
+        // let (request_line, _) = client_message.split_once("\r\n").unwrap();
         let stream = incoming_stream.unwrap();
         let buf_reader = BufReader::new(&stream);
         let request_line = buf_reader.lines().next().unwrap().unwrap();

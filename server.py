@@ -58,19 +58,19 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
     # binary_semaphore.release()
     mutex.release()
 
-    server_message = "HTTP/1.1 200 OK\n"
+    server_message = "HTTP/1.1 200 OK\r\n"
 
-    format_string = "Date: %a, %d %b %Y %X GMT\n"
+    format_string = "Date: %a, %d %b %Y %X GMT\r\n"
     server_message += time.strftime(format_string, time.gmtime())
 
-    server_message += "Server: Web Server\n"
-    server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n"
-    server_message += "Accept-Ranges: bytes\n"
+    server_message += "Server: Web Server\r\n"
+    server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n"
+    server_message += "Accept-Ranges: bytes\r\n"
 
-    content = f"What's up? This server was written in Python. Your IP address is {client_address}\n"
+    content = f"What's up? This server was written in Python. Your IP address is {client_address}\r\n"
 
-    server_message += f"Content-Length: {len(content)}\n"
-    server_message += "Content-Type: text/html\n\n"
+    server_message += f"Content-Length: {len(content)}\r\n"
+    server_message += "Content-Type: text/html\r\n\r\n"
     server_message += content
 
     client_socket.send(server_message.encode())
@@ -151,7 +151,7 @@ def main() -> None:
             # pass socket.MSG_WAITALL in 2nd argument of recv to wait for all bytes
             client_message_bytes = client_socket.recv(4096)
             client_message = client_message_bytes.decode()
-            request_line = client_message[:client_message.find("\n")]
+            request_line = client_message[:client_message.find("\r\n")]
             print(request_line)
             newthread = ClientHandler(client_socket, client_address)
             # newthread = Thread(target=client_handler, args=(client_socket, client_address)) # To create a pthread-style thread

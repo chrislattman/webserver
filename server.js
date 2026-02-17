@@ -80,23 +80,23 @@ function main() {
         // use const client_message_bytes = Buffer.from(socket.read(4096)); to wait for all bytes
         socket.on("data", (client_message_bytes) => {
             let client_message = client_message_bytes.toString();
-            let request_line = client_message.substring(0, client_message.indexOf("\n"));
+            let request_line = client_message.substring(0, client_message.indexOf("\r\n"));
             console.log(request_line);
         });
 
-        let serverMessage = "HTTP/1.1 200 OK\n";
+        let serverMessage = "HTTP/1.1 200 OK\r\n";
 
         let now = new Date();
-        serverMessage += `Date: ${now.toUTCString()}\n`;
+        serverMessage += `Date: ${now.toUTCString()}\r\n`;
 
-        serverMessage += "Server: Web Server\n";
-        serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
-        serverMessage += "Accept-Ranges: bytes\n"
+        serverMessage += "Server: Web Server\r\n";
+        serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n";
+        serverMessage += "Accept-Ranges: bytes\r\n"
 
-        let content = `What's up? This server was written in JavaScript (Node.js). Your IP address is ${socket.remoteAddress}\n`;
+        let content = `What's up? This server was written in JavaScript (Node.js). Your IP address is ${socket.remoteAddress}\r\n`;
 
-        serverMessage += `Content-Length: ${content.length}\n`;
-        serverMessage += "Content-Type: text/html\n\n";
+        serverMessage += `Content-Length: ${content.length}\r\n`;
+        serverMessage += "Content-Type: text/html\r\n\r\n";
         serverMessage += content;
         socket.end(serverMessage);
     });

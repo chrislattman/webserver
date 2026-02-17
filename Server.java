@@ -64,24 +64,24 @@ public class Server {
                 // to write a byte array to a socket
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
 
-                out.println("HTTP/1.1 200 OK");
+                out.println("HTTP/1.1 200 OK\r");
 
                 currentTime = new SimpleDateFormat("'Date: 'EEE, d MMM yyyy HH:mm:ss z");
                 currentTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-                out.println(currentTime.format(new Date()));
+                out.println(currentTime.format(new Date()) + "\r");
 
-                out.println("Server: Web Server");
-                out.println("Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT");
-                out.println("Accept-Ranges: bytes");
+                out.println("Server: Web Server\r");
+                out.println("Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r");
+                out.println("Accept-Ranges: bytes\r");
 
                 content = new StringBuilder();
                 content.append("What's up? This server was written in Java. Your IP address is ");
                 content.append(this.clientSocket.getInetAddress().getHostAddress());
-                content.append("\n");
+                content.append("\r\n");
 
-                out.println("Content-Length: " + content.length());
-                out.println("Content-Type: text/html");
-                out.println();
+                out.println("Content-Length: " + content.length() + "\r");
+                out.println("Content-Type: text/html\r");
+                out.println("\r");
                 out.print(content.toString());
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
@@ -169,7 +169,7 @@ public class Server {
                 // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
                 // in.read(clientMessageBytes);
                 // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
-                // requestLine = clientMessage.split("\n", 2)[0]; // this keeps the rest of the body in one String
+                // requestLine = clientMessage.split("\r\n", 2)[0]; // this keeps the rest of the body in one String
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();

@@ -22,22 +22,22 @@ void ClientHandler(object? arg)
     using TcpClient client = (TcpClient)arg;
     NetworkStream stream = client.GetStream();
 
-    string serverMessage = "HTTP/1.1 200 OK\n";
+    string serverMessage = "HTTP/1.1 200 OK\r\n";
 
-    serverMessage += "Date: " + DateTime.UtcNow.ToString("R") + "\n";
+    serverMessage += "Date: " + DateTime.UtcNow.ToString("R") + "\r\n";
 
-    serverMessage += "Server: Web Server\n";
-    serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\n";
-    serverMessage += "Accept-Ranges: bytes\n";
+    serverMessage += "Server: Web Server\r\n";
+    serverMessage += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n";
+    serverMessage += "Accept-Ranges: bytes\r\n";
 
     StringBuilder content = new();
     content.Append("What's up? This server was written in C#/.NET. Your IP address is ");
     if (client.Client.RemoteEndPoint == null) { return; }
-    content.Append(((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
+    content.Append(((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString() + "\r");
     content.AppendLine();
 
-    serverMessage += $"Content-Length: {content.Length}\n";
-    serverMessage += "Content-Type: text/html\n\n";
+    serverMessage += $"Content-Length: {content.Length}\r\n";
+    serverMessage += "Content-Type: text/html\r\n\r\n";
     serverMessage += content.ToString();
 
     stream.Write(Encoding.ASCII.GetBytes(serverMessage));
@@ -115,7 +115,7 @@ try
         stream.Read(clientMessageBytes, 0, 4096);
 #pragma warning restore CA2022 // Avoid inexact read with 'Stream.Read'
         clientMessage = Encoding.ASCII.GetString(clientMessageBytes);
-        requestLine = clientMessage.Split('\n', 2)[0]; // this keeps the rest of the body in one string
+        requestLine = clientMessage.Split('\r\n', 2)[0]; // this keeps the rest of the body in one string
         Console.WriteLine(requestLine);
         threads[threadIndex] = new Thread(new ParameterizedThreadStart(ClientHandler));
         threads[threadIndex++].Start(client);
