@@ -173,6 +173,12 @@ public class Server {
                 bufferedReader = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()));
                 requestLine = bufferedReader.readLine();
+                // Only accepting HTTP GET requests
+                if (!requestLine.startsWith("GET")) {
+                    clientSocket.shutdownOutput();
+                    clientSocket.close();
+                    continue;
+                }
                 System.out.println(requestLine);
                 threads[threadIndex] = new ClientHandler(clientSocket);
                 threads[threadIndex++].start();

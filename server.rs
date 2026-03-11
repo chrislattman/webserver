@@ -107,6 +107,11 @@ fn main() {
         let stream = incoming_stream.unwrap();
         let buf_reader = BufReader::new(&stream);
         let request_line = buf_reader.lines().next().unwrap().unwrap();
+        // Only accepting HTTP GET requests
+        if !request_line.starts_with("GET") {
+            stream.shutdown(Shutdown::Write).unwrap();
+            continue;
+        }
         println!("{request_line}");
         threads.push(spawn(|| {
             client_handler(stream);

@@ -156,6 +156,15 @@ func main() {
 		requestLine, _, _ := strings.Cut(clientMessage, "\r\n")
 		// requestLine := clientMessage[:strings.Index(clientMessage, "\r\n")]
 		// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\r\n')]
+		// Only accepting HTTP GET requests
+		if !strings.HasPrefix(requestLine, "GET") {
+			err = conn.Close()
+			if err != nil {
+				fmt.Println("net.Conn.Close:", err)
+				return
+			}
+			continue
+		}
 		fmt.Println(requestLine)
 		go handleConnection(conn)
 	}

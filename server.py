@@ -152,6 +152,11 @@ def main() -> None:
             client_message_bytes = client_socket.recv(4096)
             client_message = client_message_bytes.decode()
             request_line = client_message[:client_message.find("\r\n")]
+            # Only accepting HTTP GET requests
+            if not request_line.startswith("GET"):
+                client_socket.shutdown(socket.SHUT_WR)
+                client_socket.close()
+                continue
             print(request_line)
             newthread = ClientHandler(client_socket, client_address)
             # newthread = Thread(target=client_handler, args=(client_socket, client_address)) # To create a pthread-style thread

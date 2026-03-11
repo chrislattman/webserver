@@ -78,11 +78,20 @@ function main() {
         console.log("Handling request #" + counter);
 
         // use const client_message_bytes = Buffer.from(socket.read(4096)); to wait for all bytes
+        let bad_request = false;
         socket.on("data", (client_message_bytes) => {
             let client_message = client_message_bytes.toString();
             let request_line = client_message.substring(0, client_message.indexOf("\r\n"));
+            // Only accepting HTTP GET requests
+            if (!request_line.startsWith("GET")) {
+                bad_request = true;
+                return;
+            }
             console.log(request_line);
         });
+        if (bad_request) {
+            return;
+        }
 
         let serverMessage = "HTTP/1.1 200 OK\r\n";
 

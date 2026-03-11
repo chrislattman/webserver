@@ -116,6 +116,12 @@ try
 #pragma warning restore CA2022 // Avoid inexact read with 'Stream.Read'
         clientMessage = Encoding.ASCII.GetString(clientMessageBytes);
         requestLine = clientMessage.Split('\r\n', 2)[0]; // this keeps the rest of the body in one string
+        // Only accepting HTTP GET requests
+        if (!requestLine.startsWith("GET")) {
+            stream.close();
+            client.close();
+            continue;
+        }
         Console.WriteLine(requestLine);
         threads[threadIndex] = new Thread(new ParameterizedThreadStart(ClientHandler));
         threads[threadIndex++].Start(client);

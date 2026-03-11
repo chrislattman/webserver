@@ -278,6 +278,18 @@ int main(int argc, char *argv[])
         headers_begin = strstr(client_message, "\r\n");
         request_line_length = headers_begin - client_message;
         client_message[request_line_length] = '\0';
+        // Only accepting HTTP GET requests
+        if (strncmp(client_message, "GET", 3) != 0) {
+            if (shutdown(client_socket, SHUT_WR) < 0) {
+                fprintf(stderr, "shutdown: %s\n", strerror(errno));
+                goto cleanup;
+            }
+            if (close(client_socket) < 0) {
+                fprintf(stderr, "close: %s\n", strerror(errno));
+                goto cleanup;
+            }
+            continue;
+        }
         printf("%s\n", client_message);
 
         // would need to deep copy sin6_addr to client_address for IPv6
