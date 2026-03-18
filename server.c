@@ -28,7 +28,7 @@
 
 static const unsigned short PORT_NUMBER = 8080;
 static int server_socket;
-static pthread_mutex_t mutex;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 // #ifdef __linux__
 // static sem_t binary_semaphore;
 // #elif __APPLE__
@@ -201,11 +201,6 @@ int main(int argc, char *argv[])
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
-    }
-
-    if ((err = pthread_mutex_init(&mutex, NULL)) != 0) {
-        fprintf(stderr, "pthread_mutex_init: %s\n", strerror(err));
-        exit(1);
     }
 
 // #ifdef __linux__
