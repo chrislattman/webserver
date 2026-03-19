@@ -99,7 +99,7 @@ static void *client_handler(void *arg)
     strcat(server_message, "Content-Type: text/html\r\n\r\n");
     strcat(server_message, content);
 
-    if (send(client_socket, server_message, strlen(server_message) + 1, 0) < 0) {
+    if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
         return NULL;
     }
