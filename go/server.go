@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	// "io"
 	"net"
@@ -29,6 +30,40 @@ const (
 
 // Handles client connections.
 func handleConnection(conn net.Conn) {
+	// Always close the connection, even after an error
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			fmt.Println("net.Conn.Close:", err)
+		}
+	}()
+
+	// Reading the request happens here rather than in main() so that a slow
+	// or silent client only holds up its own goroutine, not the accept loop.
+	// The deadline bounds how long an idle client can tie it up.
+	err := conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	if err != nil {
+		fmt.Println("net.Conn.SetReadDeadline:", err)
+		return
+	}
+	clientMessageBytes := make([]byte, 4096)
+	// use io.ReadFull(conn, client_message_bytes) to wait for clientMessageBytes to fill up entirely
+	n, err := conn.Read(clientMessageBytes)
+	if err != nil {
+		fmt.Println("net.Conn.Read:", err)
+		return
+	}
+	// Only look at the bytes actually received, not the whole zeroed buffer
+	clientMessage := string(clientMessageBytes[:n])
+	requestLine, _, _ := strings.Cut(clientMessage, "\r\n")
+	// requestLine := clientMessage[:strings.Index(clientMessage, "\r\n")]
+	// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\r\n')]
+	// Only accepting HTTP GET requests
+	if !strings.HasPrefix(requestLine, "GET") {
+		return
+	}
+	fmt.Println(requestLine)
+
 	// critical section
 	mutex.Lock() // using a mutex
 	// <-channel // using a channel
@@ -57,15 +92,9 @@ func handleConnection(conn net.Conn) {
 	serverMessage += "Content-Type: text/html\r\n\r\n"
 	serverMessage += content
 
-	_, err := conn.Write([]byte(serverMessage))
+	_, err = conn.Write([]byte(serverMessage))
 	if err != nil {
 		fmt.Println("net.Conn.Write:", err)
-		return
-	}
-	err = conn.Close()
-	if err != nil {
-		fmt.Println("net.Conn.Close:", err)
-		return
 	}
 }
 
@@ -142,30 +171,13 @@ func main() {
 		// sock, _ := net.Dial("tcp", "127.0.0.1:5000")
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("net.Listener.Accept:", err)
-			goto shutdown
-		}
-		clientMessageBytes := make([]byte, 4096)
-		// use io.ReadFull(conn, client_message_bytes) to wait for clientMessageBytes to fill up entirely
-		_, err = conn.Read(clientMessageBytes)
-		if err != nil {
-			fmt.Println("net.conn.Read:", err)
-			goto shutdown
-		}
-		clientMessage := string(clientMessageBytes)
-		requestLine, _, _ := strings.Cut(clientMessage, "\r\n")
-		// requestLine := clientMessage[:strings.Index(clientMessage, "\r\n")]
-		// requestLine := clientMessage[:strings.IndexRune(clientMessage, '\r\n')]
-		// Only accepting HTTP GET requests
-		if !strings.HasPrefix(requestLine, "GET") {
-			err = conn.Close()
-			if err != nil {
-				fmt.Println("net.Conn.Close:", err)
-				return
+			if errors.Is(err, net.ErrClosed) {
+				goto shutdown
 			}
+			// e.g. ECONNABORTED or EMFILE: only affects one connection
+			fmt.Println("net.Listener.Accept:", err)
 			continue
 		}
-		fmt.Println(requestLine)
 		go handleConnection(conn)
 	}
 

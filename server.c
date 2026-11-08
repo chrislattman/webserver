@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -49,16 +50,44 @@ enum nettype {
 /**
  * @brief Thread that handles each client connection.
  *
- * @param arg pointer to sock_info struct
+ * @param arg pointer to a heap-allocated sock_info struct (freed here)
  * @return NULL
  */
 static void *client_handler(void *arg)
 {
     char server_message[4096], content[128], content_length[64], date[64];
+    char client_message[4096], *headers_begin;
     sock_info *socket_info;
     int client_socket;
     struct in_addr client_address;
     time_t curr_time;
+    ssize_t n;
+
+    // Each thread gets its own copy of sock_info, so the main loop can't
+    // overwrite it with the next connection's socket before we read it
+    socket_info = (sock_info *) arg;
+    client_socket = socket_info->client_socket;
+    client_address = socket_info->client_address;
+    free(socket_info);
+
+    // Reading the request happens here rather than in main() so that a slow
+    // or silent client only holds up its own thread, not the accept loop.
+    // pass MSG_WAITALL in 4th argument to recv to wait for client_message to fill up entirely
+    if ((n = recv(client_socket, client_message, sizeof(client_message) - 1, 0)) <= 0) {
+        if (n < 0) {
+            fprintf(stderr, "recv: %s\n", strerror(errno));
+        }
+        goto close_client;
+    }
+    client_message[n] = '\0';
+    if ((headers_begin = strstr(client_message, "\r\n")) != NULL) {
+        *headers_begin = '\0';
+    }
+    // Only accepting HTTP GET requests
+    if (strncmp(client_message, "GET", 3) != 0) {
+        goto close_client;
+    }
+    printf("%s\n", client_message);
 
     // critical section
     pthread_mutex_lock(&mutex); // using a mutex
@@ -75,10 +104,6 @@ static void *client_handler(void *arg)
 //     dispatch_semaphore_signal(binary_semaphore);
 // #endif
     pthread_mutex_unlock(&mutex);
-
-    socket_info = (sock_info *) arg;
-    client_socket = socket_info->client_socket;
-    client_address = socket_info->client_address;
 
     strcpy(server_message, "HTTP/1.1 200 OK\r\n");
 
@@ -99,17 +124,19 @@ static void *client_handler(void *arg)
     strcat(server_message, "Content-Type: text/html\r\n\r\n");
     strcat(server_message, content);
 
-    if (send(client_socket, server_message, strlen(server_message), 0) < 0) {
+    // MSG_NOSIGNAL: a client that already disconnected shouldn't kill the
+    // whole server with SIGPIPE
+    if (send(client_socket, server_message, strlen(server_message), MSG_NOSIGNAL) < 0) {
         fprintf(stderr, "send: %s\n", strerror(errno));
-        return NULL;
     }
-    if (shutdown(client_socket, SHUT_WR) < 0) {
+
+close_client:
+    // Always close the socket, even after an error, so file descriptors don't leak
+    if (shutdown(client_socket, SHUT_WR) < 0 && errno != ENOTCONN) {
         fprintf(stderr, "shutdown: %s\n", strerror(errno));
-        return NULL;
     }
     if (close(client_socket) < 0) {
         fprintf(stderr, "close: %s\n", strerror(errno));
-        return NULL;
     }
     return NULL;
 }
@@ -135,13 +162,14 @@ static void signal_handler(__attribute__((unused)) int signum)
 int main(int argc, char *argv[])
 {
     unsigned short port_number = 0;
-    int err, client_socket, thread_index, reuseaddr = 1, fildes[2];
+    int err, client_socket, reuseaddr = 1, fildes[2];
     struct sockaddr_in server_connection, client_connection;
     socklen_t client_connection_size = (socklen_t) sizeof(client_connection);
-    pthread_t thread_id[60];
-    sock_info socket_info;
-    char date[30], client_message[4096], *headers_begin, addr[INET_ADDRSTRLEN];
-    long request_line_length;
+    pthread_t thread_id;
+    sock_info *socket_info;
+    char date[30] = {0}, addr[INET_ADDRSTRLEN];
+    ssize_t date_length;
+    struct timeval recv_timeout = { .tv_sec = 10, .tv_usec = 0 };
     struct addrinfo *ipaddrs, *res, hints = {0};
 
     enum nettype net_type = IPv4;
@@ -179,8 +207,10 @@ int main(int argc, char *argv[])
         return 1; // to prevent fallthrough in case of an execlp error
     default:
         close(fildes[1]);
-        read(fildes[0], date, sizeof(date) - 1);
-        printf("Current time: %s", date);
+        if ((date_length = read(fildes[0], date, sizeof(date) - 1)) > 0) {
+            date[date_length] = '\0';
+            printf("Current time: %s", date);
+        }
         close(fildes[0]);
         wait(NULL);
     }
@@ -190,14 +220,16 @@ int main(int argc, char *argv[])
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP; // can be 0 since TCP is implied by SOCK_STREAM
     if ((err = getaddrinfo("www.google.com", NULL, &hints, &ipaddrs)) != 0) {
+        // ipaddrs is not set on failure, so it must not be used or freed
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(err));
+    } else {
+        puts("IPv4 addresses associated with www.google.com:");
+        for (res = ipaddrs; res != NULL; res = res->ai_next) {
+            inet_ntop(res->ai_family, &((struct sockaddr_in *)res->ai_addr)->sin_addr, addr, sizeof(addr));
+            printf("%s\n", addr);
+        }
+        freeaddrinfo(ipaddrs);
     }
-    puts("IPv4 addresses associated with www.google.com:");
-    for (res = ipaddrs; res != NULL; res = res->ai_next) {
-        inet_ntop(res->ai_family, &((struct sockaddr_in *)res->ai_addr)->sin_addr, addr, sizeof(addr));
-        printf("%s\n", addr);
-    }
-    freeaddrinfo(ipaddrs);
 
     if (argc == 2) {
         port_number = (unsigned short) atoi(argv[1]);
@@ -247,9 +279,9 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
 
-    thread_index = 0;
     while (1) {
         memset(&client_connection, 0, sizeof(client_connection));
+        client_connection_size = (socklen_t) sizeof(client_connection);
         // To connect to a server:
         // struct sockaddr_in connection;
         // connection.sin_family = AF_INET;
@@ -260,53 +292,39 @@ int main(int argc, char *argv[])
         if ((client_socket = accept(server_socket,
                 (struct sockaddr *) &client_connection,
                 &client_connection_size)) < 0) {
+            // Errors like ECONNABORTED (client gave up) or EMFILE (out of
+            // file descriptors) only affect one connection; keep serving
             fprintf(stderr, "accept: %s\n", strerror(errno));
-            goto cleanup;
-        }
-
-        // pass MSG_WAITALL in 4th argument to recv to wait for client_message to fill up entirely
-        // The logic in lines 274-282 should be in client_handler (in the event of client sending nothing)
-        if (recv(client_socket, client_message, sizeof(client_message), 0) < 0) {
-            fprintf(stderr, "recv: %s\n", strerror(errno));
-            goto cleanup;
-        }
-        headers_begin = strstr(client_message, "\r\n");
-        request_line_length = headers_begin - client_message;
-        client_message[request_line_length] = '\0';
-        // Only accepting HTTP GET requests
-        if (strncmp(client_message, "GET", 3) != 0) {
-            if (shutdown(client_socket, SHUT_WR) < 0) {
-                fprintf(stderr, "shutdown: %s\n", strerror(errno));
-                goto cleanup;
-            }
-            if (close(client_socket) < 0) {
-                fprintf(stderr, "close: %s\n", strerror(errno));
-                goto cleanup;
-            }
             continue;
         }
-        printf("%s\n", client_message);
+
+        // Bound how long an idle client can tie up its thread
+        if (setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout)) < 0) {
+            fprintf(stderr, "setsockopt: %s\n", strerror(errno));
+        }
 
         // would need to deep copy sin6_addr to client_address for IPv6
-        socket_info = (sock_info) {
+        // Allocated per connection; client_handler frees it
+        if ((socket_info = malloc(sizeof(*socket_info))) == NULL) {
+            fprintf(stderr, "malloc: %s\n", strerror(errno));
+            close(client_socket);
+            continue;
+        }
+        *socket_info = (sock_info) {
             .client_socket = client_socket,
             .client_address = client_connection.sin_addr,
         };
-        if ((err = pthread_create(&thread_id[thread_index++], NULL, client_handler,
-                &socket_info)) != 0) {
+        if ((err = pthread_create(&thread_id, NULL, client_handler,
+                socket_info)) != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(err));
-            goto cleanup;
+            free(socket_info);
+            close(client_socket);
+            continue;
         }
-
-        if (thread_index >= 50) {
-            thread_index = 0;
-            while (thread_index < 50) {
-                if ((err = pthread_join(thread_id[thread_index++], NULL)) != 0) {
-                    fprintf(stderr, "pthread_join: %s\n", strerror(err));
-                    goto cleanup;
-                }
-            }
-            thread_index = 0;
+        // Detached threads clean up after themselves. Joining them in batches
+        // would make the accept loop wait on the slowest client in the batch.
+        if ((err = pthread_detach(thread_id)) != 0) {
+            fprintf(stderr, "pthread_detach: %s\n", strerror(err));
         }
     }
 

@@ -10,6 +10,43 @@ int counter = 0;
 
 void ClientHandler(object? arg)
 {
+    if (arg == null) { return; }
+    // Disposing the TcpClient closes the socket, even after an error
+    using TcpClient client = (TcpClient)arg;
+    try
+    {
+        HandleRequest(client);
+    }
+    catch (Exception e) when (e is IOException || e is SocketException || e is ObjectDisposedException)
+    {
+        // Only affects this connection
+        Console.WriteLine("ClientHandler: " + e.Message);
+    }
+}
+
+void HandleRequest(TcpClient client)
+{
+    NetworkStream stream = client.GetStream();
+
+    // Reading the request happens here rather than in the main loop so that a
+    // slow or silent client only holds up its own thread, not the accept loop.
+    // The timeout bounds how long an idle client can tie it up.
+    stream.ReadTimeout = 10000;
+    byte[] clientMessageBytes = new byte[4096];
+    // use stream.ReadExactly(clientMessageBytes); to wait for all bytes
+    int n = stream.Read(clientMessageBytes, 0, clientMessageBytes.Length);
+    if (n <= 0) { return; } // client closed the connection without sending anything
+    // Only look at the bytes received for THIS request
+    string clientMessage = Encoding.ASCII.GetString(clientMessageBytes, 0, n);
+    string requestLine = clientMessage.Split("\r\n", 2)[0]; // this keeps the rest of the body in one string
+    // Only accepting HTTP GET requests
+    if (!requestLine.StartsWith("GET"))
+    {
+        client.Client.Shutdown(SocketShutdown.Send);
+        return;
+    }
+    Console.WriteLine(requestLine);
+
     // critical section
     mutex.WaitOne();
     // binarySemaphore.WaitOne(); // using a binary semaphore
@@ -17,10 +54,6 @@ void ClientHandler(object? arg)
     Console.WriteLine("Handling request #" + counter);
     // binarySemaphore.Release();
     mutex.ReleaseMutex();
-
-    if (arg == null) { return; }
-    using TcpClient client = (TcpClient)arg;
-    NetworkStream stream = client.GetStream();
 
     string serverMessage = "HTTP/1.1 200 OK\r\n";
 
@@ -57,8 +90,9 @@ switch (netType)
         break;
 }
 
-using (Process process = new())
+try
 {
+    using Process process = new();
     process.StartInfo.FileName = "date";
     process.StartInfo.UseShellExecute = false;
     process.StartInfo.RedirectStandardOutput = true;
@@ -66,15 +100,27 @@ using (Process process = new())
     using StreamReader reader = process.StandardOutput;
     Console.Write("Current time: " + reader.ReadToEnd());
 }
-
-IPAddress[] ipaddrs = Dns.GetHostAddresses("www.google.com");
-Console.WriteLine("IPv4 addresses associated with www.google.com:");
-foreach (IPAddress res in ipaddrs)
+catch (System.ComponentModel.Win32Exception e)
 {
-    if (res.AddressFamily == AddressFamily.InterNetwork)
+    // e.g. there's no "date" executable on Windows
+    Console.WriteLine("Process.Start: " + e.Message);
+}
+
+try
+{
+    IPAddress[] ipaddrs = Dns.GetHostAddresses("www.google.com");
+    Console.WriteLine("IPv4 addresses associated with www.google.com:");
+    foreach (IPAddress res in ipaddrs)
     {
-        Console.WriteLine(res.ToString());
+        if (res.AddressFamily == AddressFamily.InterNetwork)
+        {
+            Console.WriteLine(res.ToString());
+        }
     }
+}
+catch (SocketException e)
+{
+    Console.WriteLine("Dns.GetHostAddresses: " + e.Message);
 }
 
 int portNumber = 0;
@@ -99,42 +145,25 @@ try
     listener.Start();
 
     TcpClient client;
-    NetworkStream stream;
-    Thread[] threads = new Thread[60];
-    int threadIndex = 0;
-    byte[] clientMessageBytes = new byte[4096];
-    string clientMessage, requestLine;
     while (true)
     {
         // To connect to a server:
         // using TcpClient conn = new("127.0.0.1", 5000);
-        client = listener.AcceptTcpClient();
-        stream = client.GetStream();
-        // use stream.ReadExactly(clientMessageBytes); to wait for all bytes
-#pragma warning disable CA2022 // Avoid inexact read with 'Stream.Read'
-        stream.Read(clientMessageBytes, 0, 4096);
-#pragma warning restore CA2022 // Avoid inexact read with 'Stream.Read'
-        clientMessage = Encoding.ASCII.GetString(clientMessageBytes);
-        requestLine = clientMessage.Split('\r\n', 2)[0]; // this keeps the rest of the body in one string
-        // Only accepting HTTP GET requests
-        if (!requestLine.startsWith("GET")) {
-            stream.close();
-            client.close();
+        try
+        {
+            client = listener.AcceptTcpClient();
+        }
+        catch (SocketException e) when (e.SocketErrorCode != SocketError.Interrupted && e.SocketErrorCode != SocketError.OperationAborted)
+        {
+            // e.g. ConnectionReset: only affects one connection
+            Console.WriteLine("AcceptTcpClient: " + e.Message);
             continue;
         }
-        Console.WriteLine(requestLine);
-        threads[threadIndex] = new Thread(new ParameterizedThreadStart(ClientHandler));
-        threads[threadIndex++].Start(client);
-
-        if (threadIndex >= 50)
-        {
-            threadIndex = 0;
-            while (threadIndex < 50)
-            {
-                threads[threadIndex++].Join();
-            }
-            threadIndex = 0;
-        }
+        // Joining threads in batches would make the accept loop wait on the
+        // slowest client in the batch, so let each thread finish on its own.
+        // Background threads don't keep the process alive after Ctrl + C.
+        Thread thread = new(new ParameterizedThreadStart(ClientHandler)) { IsBackground = true };
+        thread.Start(client);
     }
 }
 catch (SocketException e)

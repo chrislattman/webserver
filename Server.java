@@ -1,14 +1,15 @@
 import java.io.BufferedReader;
-// import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-// import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 // import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,15 +52,40 @@ public class Server {
          * Called by the start() function asynchronously.
          */
         public void run() {
-            // critical section
-            mutex.lock(); // using a mutex
-            // binarySemaphore.acquireUninterruptibly(); // using a binary semaphore
-            ++counter;
-            System.out.println("Handling request #" + counter);
-            // binarySemaphore.release();
-            mutex.unlock();
+            // try-with-resources closes the socket even after an error
+            try (Socket socket = this.clientSocket) {
+                // Reading the request happens here rather than in main() so
+                // that a slow or silent client only holds up its own thread,
+                // not the accept loop. The timeout bounds how long an idle
+                // client can tie it up.
+                socket.setSoTimeout(10000);
+                // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
+                // Reading into a fixed-size buffer (rather than
+                // BufferedReader.readLine()) caps how much a client can make
+                // us buffer while looking for the end of the line
+                byte[] clientMessageBytes = new byte[4096];
+                InputStream in = socket.getInputStream();
+                int n = in.read(clientMessageBytes);
+                if (n <= 0) {
+                    return; // client closed the connection without sending anything
+                }
+                String clientMessage = new String(clientMessageBytes, 0, n, StandardCharsets.UTF_8);
+                String requestLine = clientMessage.split("\r\n", 2)[0]; // this keeps the rest of the body in one String
+                // Only accepting HTTP GET requests
+                if (!requestLine.startsWith("GET")) {
+                    socket.shutdownOutput();
+                    return;
+                }
+                System.out.println(requestLine);
 
-            try {
+                // critical section
+                mutex.lock(); // using a mutex
+                // binarySemaphore.acquireUninterruptibly(); // using a binary semaphore
+                ++counter;
+                System.out.println("Handling request #" + counter);
+                // binarySemaphore.release();
+                mutex.unlock();
+
                 // use out = new DataOutputStream(this.clientSocket.getOutputStream());
                 // to write a byte array to a socket
                 out = new PrintWriter(this.clientSocket.getOutputStream(), true);
@@ -85,9 +111,9 @@ public class Server {
                 out.print(content.toString());
 
                 out.close(); // same effect as clientSocket.shutdownOutput()
-                this.clientSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                // Only affects this connection
+                System.err.println("ClientHandler: " + e);
             }
         }
     }
@@ -153,48 +179,30 @@ public class Server {
             }
             serverSocket.setReuseAddress(true);
             Socket clientSocket;
-            ClientHandler[] threads = new ClientHandler[60];
-            int threadIndex = 0;
-            // byte[] clientMessageBytes;
-            // BufferedInputStream in;
-            // String clientMessage;
-            BufferedReader bufferedReader;
-            String requestLine;
             while (true) {
                 // To connect to a server:
                 // Socket sock = new Socket("127.0.0.1", 5000);
-                clientSocket = serverSocket.accept();
-                // clientMessageBytes = new byte[4096];
-                // in = new BufferedInputStream(clientSocket.getInputStream());
-                // use clientMessageBytes = in.readNBytes(4096); to wait for all bytes
-                // in.read(clientMessageBytes);
-                // clientMessage = new String(clientMessageBytes, StandardCharsets.UTF_8);
-                // requestLine = clientMessage.split("\r\n", 2)[0]; // this keeps the rest of the body in one String
-                bufferedReader = new BufferedReader(
-                    new InputStreamReader(clientSocket.getInputStream()));
-                requestLine = bufferedReader.readLine();
-                // Only accepting HTTP GET requests
-                if (!requestLine.startsWith("GET")) {
-                    clientSocket.shutdownOutput();
-                    clientSocket.close();
+                try {
+                    clientSocket = serverSocket.accept();
+                } catch (SocketException e) {
+                    if (serverSocket.isClosed()) {
+                        throw e;
+                    }
+                    // e.g. too many open files: only affects one connection
+                    System.err.println("accept: " + e);
                     continue;
                 }
-                System.out.println(requestLine);
-                threads[threadIndex] = new ClientHandler(clientSocket);
-                threads[threadIndex++].start();
-
-                if (threadIndex >= 50) {
-                    threadIndex = 0;
-                    while (threadIndex < 50) {
-                        threads[threadIndex++].join();
-                    }
-                    threadIndex = 0;
-                }
+                // Joining threads in batches would make the accept loop wait
+                // on the slowest client in the batch, so let each thread
+                // finish on its own
+                new ClientHandler(clientSocket).start();
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             try {
-                serverSocket.close();
+                if (serverSocket != null) {
+                    serverSocket.close();
+                }
             } catch (IOException exc) {
                 exc.printStackTrace();
             }

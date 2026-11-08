@@ -31,7 +31,8 @@ class ClientHandler(Thread):
             client_socket_arg (socket.socket): client socket
             client_address_arg (str): client host address
         """
-        super().__init__()
+        # daemon threads don't keep the process alive after Ctrl + C
+        super().__init__(daemon=True)
         self.client_socket = client_socket_arg
         self.client_address = client_address_arg
 
@@ -47,6 +48,39 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
     Args:
         client_socket_arg (socket.socket): client socket
         client_address_arg (str): client host address
+    """
+    try:
+        # Reading the request happens here rather than in main() so that a
+        # slow or silent client only holds up its own thread, not the accept
+        # loop. The timeout bounds how long an idle client can tie it up.
+        client_socket.settimeout(10)
+        # pass socket.MSG_WAITALL in 2nd argument of recv to wait for all bytes
+        client_message_bytes = client_socket.recv(4096)
+        # Don't let invalid UTF-8 from a client raise an exception
+        client_message = client_message_bytes.decode(errors="replace")
+        request_line = client_message.split("\r\n", 1)[0]
+        # Only accepting HTTP GET requests
+        if not request_line.startswith("GET"):
+            return
+        print(request_line)
+        send_response(client_socket, client_address)
+    except OSError as e:
+        print("client_handler:", e)
+    finally:
+        # Always close the socket, even after an error
+        try:
+            client_socket.shutdown(socket.SHUT_WR)
+        except OSError:
+            pass  # client already disconnected
+        client_socket.close()
+
+
+def send_response(client_socket: socket.socket, client_address: str) -> None:
+    """Sends the HTTP response to a client.
+
+    Args:
+        client_socket (socket.socket): client socket
+        client_address (str): client host address
     """
 
     # critical section
@@ -73,9 +107,8 @@ def client_handler(client_socket: socket.socket, client_address: str) -> None:
     server_message += "Content-Type: text/html\r\n\r\n"
     server_message += content
 
-    client_socket.send(server_message.encode())
-    client_socket.shutdown(socket.SHUT_WR)
-    client_socket.close()
+    # send() may only send part of the message; sendall() sends all of it
+    client_socket.sendall(server_message.encode())
 
 def signal_handler(signum, frame) -> None:
     """Signal handler for Ctrl + C (SIGINT).
@@ -89,8 +122,6 @@ def signal_handler(signum, frame) -> None:
 
 def main() -> None:
     """Main server loop for the web server."""
-    threads: list[ClientHandler] = []
-
     net_type = Nettype.IPv4
     match net_type:
         case Nettype.IPv4:
@@ -103,14 +134,17 @@ def main() -> None:
     date = subprocess.run(["date"], capture_output=True)
     print("Current time: " + date.stdout.decode(), end="")
 
-    ipaddrs = socket.getaddrinfo("www.google.com",
-                                 None,
-                                 family=socket.AF_INET,
-                                 type=socket.SOCK_STREAM,
-                                 proto=socket.IPPROTO_TCP)
-    print("IPv4 addresses associated with www.google.com:")
-    for res in ipaddrs:
-        print(res[4][0])
+    try:
+        ipaddrs = socket.getaddrinfo("www.google.com",
+                                     None,
+                                     family=socket.AF_INET,
+                                     type=socket.SOCK_STREAM,
+                                     proto=socket.IPPROTO_TCP)
+        print("IPv4 addresses associated with www.google.com:")
+        for res in ipaddrs:
+            print(res[4][0])
+    except socket.gaierror as e:
+        print("getaddrinfo:", e)
 
     port_number = 0
     if len(sys.argv) == 2:
@@ -147,26 +181,17 @@ def main() -> None:
             # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
             # sock.connect(("127.0.0.1", 5000))
             # For IPv6, use (client_address, _, _, _) instead
-            client_socket, (client_address, _) = server_socket.accept()
-            # pass socket.MSG_WAITALL in 2nd argument of recv to wait for all bytes
-            client_message_bytes = client_socket.recv(4096)
-            client_message = client_message_bytes.decode()
-            request_line = client_message[:client_message.find("\r\n")]
-            # Only accepting HTTP GET requests
-            if not request_line.startswith("GET"):
-                client_socket.shutdown(socket.SHUT_WR)
-                client_socket.close()
+            try:
+                client_socket, (client_address, _) = server_socket.accept()
+            except OSError as e:
+                # e.g. ECONNABORTED or EMFILE: only affects one connection
+                print("accept:", e)
                 continue
-            print(request_line)
             newthread = ClientHandler(client_socket, client_address)
-            # newthread = Thread(target=client_handler, args=(client_socket, client_address)) # To create a pthread-style thread
+            # newthread = Thread(target=client_handler, args=(client_socket, client_address), daemon=True) # To create a pthread-style thread
+            # Joining threads in batches would make the accept loop wait on
+            # the slowest client in the batch, so let each thread finish alone
             newthread.start()
-            threads.append(newthread)
-
-            if len(threads) >= 50:
-                for t in threads:
-                    t.join()
-                threads.clear()
     except Exception as e:
         print_exception(e)
         server_socket.close()

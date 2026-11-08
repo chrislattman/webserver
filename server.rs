@@ -1,12 +1,12 @@
 use std::{
     env::args,
-    io::{BufRead, BufReader, Write},
+    io::{self, BufRead, BufReader, Read, Write},
     net::{Shutdown, TcpListener, TcpStream, ToSocketAddrs},
     process::Command,
     str::from_utf8,
     sync::Mutex,
     thread::spawn,
-    // io::Read,
+    time::Duration,
 };
 
 use chrono::Utc;
@@ -24,10 +24,44 @@ enum Nettype {
 }
 
 /// Thread that handles each client connection.
-fn client_handler(mut stream: TcpStream) {
+fn client_handler(stream: TcpStream) {
+    // Errors only affect this connection; log them instead of panicking
+    if let Err(e) = handle_request(&stream) {
+        eprintln!("client_handler: {e}");
+    }
+    // The client may already be gone, so ignore errors here
+    let _ = stream.shutdown(Shutdown::Write);
+}
+
+/// Reads one request from the client and answers it.
+fn handle_request(mut stream: &TcpStream) -> io::Result<()> {
+    // Reading the request happens here rather than in main() so that a slow
+    // or silent client only holds up its own thread, not the accept loop.
+    // The timeout bounds how long an idle client can tie it up.
+    stream.set_read_timeout(Some(Duration::from_secs(10)))?;
+
+    // let mut client_message_bytes = [0u8; 4096];
+    // use stream.read_exact(&mut client_message_bytes) to wait for client_message_bytes to fill up entirely
+    // let n = stream.read(&mut client_message_bytes)?;
+    // let client_message = String::from_utf8_lossy(&client_message_bytes[..n]);
+    // let request_line = client_message.split("\r\n").next().unwrap_or_default();
+    //
+    // take() caps how much a client can make us buffer while looking for the
+    // end of the line, and from_utf8_lossy() tolerates invalid UTF-8
+    let mut request_line_bytes = Vec::new();
+    BufReader::new(stream.take(4096)).read_until(b'\n', &mut request_line_bytes)?;
+    let request_line = String::from_utf8_lossy(&request_line_bytes);
+    let request_line = request_line.trim_end_matches(['\r', '\n']);
+    // Only accepting HTTP GET requests
+    if !request_line.starts_with("GET") {
+        return Ok(());
+    }
+    println!("{request_line}");
+
     // critical section
     {
-        let mut counter = MUTEX.lock().unwrap();
+        // A panic in another thread "poisons" the mutex; the counter is still usable
+        let mut counter = MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         *counter += 1;
         println!("Handling request #{}", *counter);
     }
@@ -41,7 +75,7 @@ fn client_handler(mut stream: TcpStream) {
     server_message += "Last-Modified: Thu, 4 Apr 2024 16:45:18 GMT\r\n";
     server_message += "Accept-Ranges: bytes\r\n";
 
-    let client_address = stream.peer_addr().unwrap().ip();
+    let client_address = stream.peer_addr()?.ip();
     let content = format!(
         "What's up? This server was written in Rust. Your IP address is {client_address}\r\n"
     );
@@ -50,8 +84,7 @@ fn client_handler(mut stream: TcpStream) {
     server_message += "Content-Type: text/html\r\n\r\n";
     server_message += &content;
 
-    stream.write_all(server_message.as_bytes()).unwrap();
-    stream.shutdown(Shutdown::Write).unwrap();
+    stream.write_all(server_message.as_bytes())
 }
 
 /// Main server loop for the web server.
@@ -96,32 +129,19 @@ fn main() {
         TcpListener::bind("127.0.0.1:".to_owned() + &PORT_NUMBER.to_string()).unwrap()
     };
 
-    let mut threads = Vec::new();
     for incoming_stream in listener.incoming() {
-        // let mut stream = incoming_stream.unwrap();
-        // let mut client_message_bytes = [0u8; 4096];
-        // use stream.read_exact(&mut client_message_bytes).unwrap(); to wait for client_message_bytes to fill up entirely
-        // stream.read(&mut client_message_bytes).unwrap();
-        // let client_message = from_utf8(&client_message_bytes).unwrap();
-        // let (request_line, _) = client_message.split_once("\r\n").unwrap();
-        let stream = incoming_stream.unwrap();
-        let buf_reader = BufReader::new(&stream);
-        let request_line = buf_reader.lines().next().unwrap().unwrap();
-        // Only accepting HTTP GET requests
-        if !request_line.starts_with("GET") {
-            stream.shutdown(Shutdown::Write).unwrap();
-            continue;
-        }
-        println!("{request_line}");
-        threads.push(spawn(|| {
-            client_handler(stream);
-        }));
-
-        if threads.len() >= 50 {
-            while !threads.is_empty() {
-                let curr_thread = threads.remove(0);
-                curr_thread.join().unwrap();
+        let stream = match incoming_stream {
+            Ok(stream) => stream,
+            // e.g. ECONNABORTED or EMFILE: only affects one connection
+            Err(e) => {
+                eprintln!("accept: {e}");
+                continue;
             }
-        }
+        };
+        // Dropping the JoinHandle detaches the thread. Joining threads in
+        // batches would make the accept loop wait on the slowest client.
+        spawn(|| {
+            client_handler(stream);
+        });
     }
 }
